@@ -1,0 +1,2 @@
+* OpenMP
+* optimize for speed (is_pseudoprime, perhaps omit is_prime)
