@@ -7,6 +7,9 @@
 #include <assert.h>
 #include <strings.h>
 #include <time.h>
+#ifdef _OPENMP
+	#include <omp.h>
+#endif
 
 int g_term = 0;
 int g_info = 0;
@@ -331,7 +334,6 @@ void sieve(char *record, int64_t init_state, int exponent_limit, const char *rec
 
 	clock_gettime(CLOCK_REALTIME, &g_tp0);
 
-	// FIXME: #pragma omp parallel for
 	for(int64_t state = init_state; state <= max_state; state++)
 	{
 		int64_t factor1 = state*INT64_C(8) + INT64_1;
@@ -345,18 +347,14 @@ void sieve(char *record, int64_t init_state, int exponent_limit, const char *rec
 		test(record, factor1, exponent_limit);
 		test(record, factor7, exponent_limit);
 
-		// FIXME: only the master thread
 		if( g_term )
 		{
-			// save the record and state...
-			record_save(record, exponent_limit, record_path);
-			state_save(state+INT64_1);
+			max_state = state;
 
 			// exit the program
 			break;
 		}
 
-		// FIXME: only the master thread
 		if( g_save )
 		{
 			// save the record and state...
@@ -366,7 +364,6 @@ void sieve(char *record, int64_t init_state, int exponent_limit, const char *rec
 			g_save = 0;
 		}
 
-		// FIXME: only the master thread
 		if( g_info )
 		{
 			printf("Current state is %" PRId64 ".\n", state);
@@ -379,6 +376,11 @@ void sieve(char *record, int64_t init_state, int exponent_limit, const char *rec
 			g_info = 0;
 		}
 	}
+
+	// save the record and state
+	record_save(record, exponent_limit, record_path);
+	state_save(max_state+INT64_1);
+	clock_dump(init_state, max_state);
 }
 
 // load the record
