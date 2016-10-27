@@ -1,5 +1,5 @@
-CFLAGS=-std=c99 -pedantic -Wall -Wextra -march=native -O3 -fopenmp -D_POSIX_C_SOURCE=199309L
-LDLIBS=-fopenmp
+CFLAGS=-std=c99 -pedantic -Wall -Wextra -march=native -O3 -D_POSIX_C_SOURCE=199309L
+LDLIBS=-lrt
 BIN=sieve-64
 
 # CFLAGS += -g
