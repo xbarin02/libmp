@@ -334,6 +334,8 @@ void sieve(char *record, int64_t init_state, int exponent_limit, const char *rec
 
 	clock_gettime(CLOCK_REALTIME, &g_tp0);
 
+	#pragma omp parallel
+	#pragma omp single nowait
 	for(int64_t state = init_state; state <= max_state; state++)
 	{
 		int64_t factor1 = state*INT64_C(8) + INT64_1;
@@ -344,8 +346,11 @@ void sieve(char *record, int64_t init_state, int exponent_limit, const char *rec
 			printf("Entering bit level %i...\n", __builtin_popcountll(factor7));
 		}
 
+		#pragma omp task
 		test(record, factor1, exponent_limit);
+		#pragma omp task
 		test(record, factor7, exponent_limit);
+		#pragma omp taskwait
 
 		if( g_term )
 		{
