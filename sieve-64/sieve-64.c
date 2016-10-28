@@ -305,7 +305,7 @@ void state_save(int64_t state)
 
 	fclose(state_file);
 
-	printf("The state was saved successfully.\n");
+	printf("The state (%" PRId64 ") was saved successfully.\n", state);
 }
 
 struct timespec g_tp0;
