@@ -1,1 +1,2 @@
 * optimize for speed (is_pseudoprime, perhaps omit is_prime)
+* log timestamps, e.g. [Oct 28 01:53]
