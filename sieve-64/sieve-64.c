@@ -7,6 +7,31 @@
 #include <assert.h>
 #include <strings.h>
 #include <time.h>
+#include <stdarg.h>
+#include <time.h>
+#include <string.h>
+
+#define ERR "ERROR: "
+#define WARN "WARNING: "
+
+int message(const char *format, ...)
+{
+	va_list ap;
+
+	time_t now = time(NULL);
+	char buf[26];
+	ctime_r(&now, buf);
+
+	buf[strlen(buf)-1] = 0;
+
+	int n = printf("[%s] ", buf);
+
+	va_start(ap, format);
+	n += vprintf(format, ap);
+	va_end(ap);
+
+	return n;
+}
 
 int g_term = 0;
 int g_info = 0;
@@ -238,7 +263,7 @@ void summary(const char *record, int exponent_limit)
 		}
 	}
 
-	printf("Summary: %i prime exponents (%i candidates + %i eliminated) and %i composite exponents (%i dirty) out of %i exponents in total. The first candidate is M(%i). The biggest eliminated is M(%i).\n",
+	message("Summary: %i prime exponents (%i candidates + %i eliminated) and %i composite exponents (%i dirty) out of %i exponents in total. The first candidate is M(%i). The biggest eliminated is M(%i).\n",
 		prime_total, prime_candidates, prime_eliminated, composite_total, composite_dirty, exponent_limit-1, first_candidate, biggest_eliminated
 	);
 }
@@ -246,7 +271,7 @@ void summary(const char *record, int exponent_limit)
 // save the record
 void record_save(char *record, int exponent_limit, const char *record_path)
 {
-	printf("Saving the record to '%s'...\n", record_path);
+	message("Saving the record to '%s'...\n", record_path);
 
 	// remove backup copy
 	char backup_path[4096];
@@ -260,7 +285,7 @@ void record_save(char *record, int exponent_limit, const char *record_path)
 	FILE *record_file = fopen(record_path, "w");
 	if( NULL == record_file )
 	{
-		printf("ERROR: Unable to save the record :(\n");
+		message(ERR "Unable to save the record :(\n");
 		return;
 	}
 
@@ -279,14 +304,14 @@ void record_save(char *record, int exponent_limit, const char *record_path)
 
 		if( (size_t)1 != fwrite(&b, (size_t)1, (size_t)1, record_file) )
 		{
-			printf("ERROR: Unable to write into the record :( The file is incomplete!\n");
+			message(ERR "Unable to write into the record :( The file is incomplete!\n");
 			break;
 		}
 	}
 
 	fclose(record_file);
 
-	printf("The record was saved successfully.\n");
+	message("The record was saved successfully.\n");
 }
 
 void state_save(int64_t state)
@@ -294,18 +319,18 @@ void state_save(int64_t state)
 	FILE *state_file = fopen("sieve.state", "wb");
 	if( NULL == state_file )
 	{
-		printf("ERROR: Unable to save the state :(\n");
+		message(ERR "Unable to save the state :(\n");
 		return;
 	}
 
 	if( fprintf(state_file, "%" PRId64, state) < 0 )
 	{
-		printf("ERROR: Unable to write the state :(\n");
+		message(ERR "Unable to write the state :(\n");
 	}
 
 	fclose(state_file);
 
-	printf("The state (%" PRId64 ") was saved successfully.\n", state);
+	message("The state (%" PRId64 ") was saved successfully.\n", state);
 }
 
 struct timespec g_tp0;
@@ -318,7 +343,7 @@ void clock_dump(int64_t init_state, int64_t state)
 
 	int64_t secs_elapsed = (int64_t)tp1.tv_sec - (int64_t)g_tp0.tv_sec;
 
-	printf("%" PRId64 " seconds elapsed (%f secs per each state).\n",
+	message("%" PRId64 " seconds elapsed (%f secs per each state).\n",
 		secs_elapsed,
 		secs_elapsed/(float)(state - init_state)
 	);
@@ -338,7 +363,7 @@ void sieve(char *record, int64_t init_state, int exponent_limit, const char *rec
 
 		if( INT64_0 == (factor7 & (factor7 + INT64_1)) )
 		{
-			printf("Entering bit level %i...\n", __builtin_popcountll(factor7));
+			message("Entering bit level %i...\n", __builtin_popcountll(factor7));
 		}
 
 		test(record, factor1, exponent_limit);
@@ -363,7 +388,7 @@ void sieve(char *record, int64_t init_state, int exponent_limit, const char *rec
 
 		if( g_info )
 		{
-			printf("Current state is %" PRId64 ".\n", state);
+			message("Current state is %" PRId64 ".\n", state);
 
 			// gather and print a progress overview
 			summary(record, exponent_limit);
@@ -384,7 +409,7 @@ void sieve(char *record, int64_t init_state, int exponent_limit, const char *rec
 char *record_load(int *p_exponent_limit, const char *record_path)
 {
 	char *record;
-	printf("Loading the record from '%s'...\n", record_path);
+	message("Loading the record from '%s'...\n", record_path);
 	FILE *record_file = fopen(record_path, "rb");
 	if( NULL == record_file )
 	{
@@ -398,13 +423,13 @@ char *record_load(int *p_exponent_limit, const char *record_path)
 		record = malloc((size_t)*p_exponent_limit);
 		if( NULL == record )
 		{
-			printf("ERROR: Unable to allocate memory :( %zu bytes requested.\n", (size_t)*p_exponent_limit);
+			message(ERR "Unable to allocate memory :( %zu bytes requested.\n", (size_t)*p_exponent_limit);
 			exit(0);
 		}
 
 		bzero(record, (size_t)*p_exponent_limit);
 
-		printf("There is no record. Created a new record of %i exponents in size (%i MiB in memory, %i MiB in file)!\n",
+		message("There is no record. Created a new record of %i exponents in size (%i MiB in memory, %i MiB in file)!\n",
 			(*p_exponent_limit),
 			(*p_exponent_limit + (1<<20) - 1)>>20,
 			(*p_exponent_limit + (1<<23) - 1)>>23
@@ -420,20 +445,20 @@ char *record_load(int *p_exponent_limit, const char *record_path)
 		// exponent_limit is unset, use fstat
 		if( -1 == *p_exponent_limit )
 		{
-			printf("The highest exponent in the record is %li (detected).\n", detected_exponent_limit);
+			message("The highest exponent in the record is %li (detected).\n", detected_exponent_limit);
 			*p_exponent_limit = detected_exponent_limit;
 		}
 
 		// if exponent_limit <> fstat, print a warning
 		if( *p_exponent_limit < detected_exponent_limit )
 		{
-			printf("WARNING: forced exponent limit (%i) is is less than the detected one (%li)! The record will be truncated.\n",
+			message(WARN "Forced exponent limit (%i) is is less than the detected one (%li)! The record will be truncated.\n",
 				*p_exponent_limit, detected_exponent_limit
 			);
 		}
 		if( *p_exponent_limit > detected_exponent_limit )
 		{
-			printf("WARNING: forced exponent limit (%i) is is greater than the detected one (%li)! The record will be extended.\n",
+			message(WARN "Forced exponent limit (%i) is is greater than the detected one (%li)! The record will be extended.\n",
 				*p_exponent_limit, detected_exponent_limit
 			);
 		}
@@ -442,7 +467,7 @@ char *record_load(int *p_exponent_limit, const char *record_path)
 		record = malloc((size_t)*p_exponent_limit);
 		if( NULL == record )
 		{
-			printf("ERROR: Unable to allocate memory :( %zu bytes requested.\n", (size_t)*p_exponent_limit);
+			message(ERR "Unable to allocate memory :( %zu bytes requested.\n", (size_t)*p_exponent_limit);
 			exit(0);
 		}
 
@@ -456,7 +481,7 @@ char *record_load(int *p_exponent_limit, const char *record_path)
 			
 			if( (size_t)1 != fread(&b, (size_t)1, (size_t)1, record_file) )
 			{
-				printf("ERROR: Unable to read from the record :( The file may be corrupted!\n");
+				message(ERR "Unable to read from the record :( The file may be corrupted!\n");
 				break;
 			}
 
@@ -469,7 +494,7 @@ char *record_load(int *p_exponent_limit, const char *record_path)
 			}
 		}
 
-		printf("Loaded an existing record of %i exponents in size (%i MiB in memory, %i MiB in file)!\n",
+		message("Loaded an existing record of %i exponents in size (%i MiB in memory, %i MiB in file)!\n",
 			(*p_exponent_limit),
 			(*p_exponent_limit + (1<<20) - 1)>>20,
 			(*p_exponent_limit + (1<<23) - 1)>>23
@@ -493,24 +518,24 @@ void state_load(int64_t *p_init_state)
 			*p_init_state = INT64_1;
 		}
 
-		printf("There is no saved state, starting from %" PRId64 "...\n", *p_init_state);
+		message("There is no saved state, starting from %" PRId64 "...\n", *p_init_state);
 	}
 	else
 	{
 		if( INT64_0 != *p_init_state )
 		{
-			printf("WARNING: Overwriting the saved state, now starting from %" PRId64 "...\n", *p_init_state);
+			message(WARN "Overwriting the saved state, now starting from %" PRId64 "...\n", *p_init_state);
 		}
 		else
 		{
 			// load sieve.state (or fallback to default)
 			if( fscanf(state_file, "%" PRId64, p_init_state) < 0 )
 			{
-				printf("ERROR: Unable to read the state :( Falling back to the default one.\n");
+				message(ERR "Unable to read the state :( Falling back to the default one.\n");
 				*p_init_state = INT64_1;
 			}
 
-			printf("Starting from the previous state %" PRId64 "...\n", *p_init_state);
+			message("Starting from the previous state %" PRId64 "...\n", *p_init_state);
 		}
 
 		fclose(state_file);
@@ -519,7 +544,7 @@ void state_load(int64_t *p_init_state)
 
 int main(int argc, char *argv[])
 {
-	printf("%s: Sieve of Mersenne exponents, 64-bit sequential test\n", argv[0]);
+	message("%s: Sieve of Mersenne exponents, 64-bit sequential test\n", argv[0]);
 
 	// default options
 	int64_t init_state = INT64_0;
@@ -537,7 +562,7 @@ int main(int argc, char *argv[])
 				init_state = atoll(optarg);
 				if( init_state < INT64_1 )
 				{
-					printf("WARNING: Invalid state, keeping the default one!\n");
+					message(WARN "Invalid state, keeping the default one!\n");
 					init_state = INT64_0;
 				}
 				break;
@@ -550,12 +575,12 @@ int main(int argc, char *argv[])
 				exponent_limit = atoi(optarg);
 				if( exponent_limit < 2 )
 				{
-					printf("WARNING: Invalid exponent, keeping the default one!\n");
+					message(WARN "Invalid exponent, keeping the default one!\n");
 					exponent_limit = -1;
 				}
 				break;
 			default :
-				printf("WARNING: Unknown option :( Read the source code!\n");
+				message(WARN "Unknown option :( Read the source code!\n");
 		}
 	}
 
@@ -567,7 +592,7 @@ int main(int argc, char *argv[])
 
 		if(optind < argc)
 		{
-			printf("WARNING: Too much options :( Read the source code!\n");
+			message(WARN "Too much options :( Read the source code!\n");
 		}
 	}
 
@@ -587,7 +612,7 @@ int main(int argc, char *argv[])
 	// set the alarm
 	if( timeout > 0 )
 	{
-		printf("Setting an alarm to be delivered in %i seconds...\n", timeout);
+		message("Setting an alarm to be delivered in %i seconds...\n", timeout);
 		alarm(timeout);
 	}
 
@@ -596,7 +621,7 @@ int main(int argc, char *argv[])
 
 	free(record);
 
-	printf("The program has finished successfully.\n");
+	message("The program has finished successfully.\n");
 
 	return 0;
 }
