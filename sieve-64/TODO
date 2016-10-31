@@ -1,2 +1,1 @@
 * optimize for speed (is_pseudoprime, perhaps omit is_prime)
-* optimize memory usage (use bit arrays instead of byte arrays)

@@ -325,7 +325,7 @@ void test(char *record, int64_t factor, int exponent_limit, const char *primes)
 	if( is_prime(n, primes) )
 	{
 		// mark the M(n) as dirty
-		record[n] = 1;
+		set_bit(record, n);
 	}
 }
 
@@ -346,7 +346,7 @@ void summary(const char *record, int exponent_limit, const char *primes)
 			prime_total++;
 
 			// if dirty
-			if( record[n] )
+			if( get_bit(record, n) )
 			{
 				prime_eliminated++;
 
@@ -367,7 +367,7 @@ void summary(const char *record, int exponent_limit, const char *primes)
 			composite_total++;
 
 			// if dirty
-			if( record[n] )
+			if( get_bit(record, n) )
 			{
 				composite_dirty++;
 			}
@@ -401,23 +401,9 @@ void record_save(char *record, int exponent_limit, const char *record_path)
 	}
 
 	// loop over the record
-	for(int byte = 0; byte < (exponent_limit+7)/8; byte++)
+	if( (size_t)(exponent_limit+7)/8 != fwrite(record, (size_t)1, (size_t)(exponent_limit+7)/8, record_file) )
 	{
-		uint8_t b = 0;
-
-		for(int bit = 0; bit < 8 && bit+byte*8 < exponent_limit; bit++)
-		{
-			if( record[bit+byte*8] )
-			{
-				b |= 1<<bit;
-			}
-		}
-
-		if( (size_t)1 != fwrite(&b, (size_t)1, (size_t)1, record_file) )
-		{
-			message(ERR "Unable to write into the record :( The file is incomplete!\n");
-			break;
-		}
+		message(ERR "Unable to write into the record :( The file is incomplete!\n");
 	}
 
 	fclose(record_file);
@@ -454,9 +440,13 @@ void clock_dump(int64_t init_state, int64_t state)
 
 	int64_t secs_elapsed = (int64_t)tp1.tv_sec - (int64_t)g_tp0.tv_sec;
 
+	float secs_per_state = secs_elapsed/(float)(state - init_state);
+	if( state - init_state <= INT64_0 )
+		secs_per_state = 0.f;
+
 	message("%" PRId64 " seconds elapsed (%f secs per each state).\n",
 		secs_elapsed,
-		secs_elapsed/(float)(state - init_state)
+		secs_per_state
 	);
 }
 
@@ -531,18 +521,18 @@ char *record_load(int *p_exponent_limit, const char *record_path)
 		}
 
 		// no record file, start a new test
-		record = malloc((size_t)*p_exponent_limit);
+		record = malloc( (size_t)(*p_exponent_limit+7)/8 );
 		if( NULL == record )
 		{
-			message(ERR "Unable to allocate memory :( %zu bytes requested.\n", (size_t)*p_exponent_limit);
+			message(ERR "Unable to allocate memory :( %zu bytes requested.\n", (size_t)(*p_exponent_limit+7)/8);
 			exit(0);
 		}
 
-		bzero(record, (size_t)*p_exponent_limit);
+		bzero(record, (size_t)(*p_exponent_limit+7)/8);
 
 		message("There is no record. Created a new record of %i exponents in size (%i MiB in memory, %i MiB in file)!\n",
 			(*p_exponent_limit),
-			(*p_exponent_limit + (1<<20) - 1)>>20,
+			(*p_exponent_limit + (1<<23) - 1)>>23,
 			(*p_exponent_limit + (1<<23) - 1)>>23
 		);
 	}
@@ -575,39 +565,25 @@ char *record_load(int *p_exponent_limit, const char *record_path)
 		}
 
 		// read the record content
-		record = malloc((size_t)*p_exponent_limit);
+		record = malloc( (size_t)(*p_exponent_limit+7)/8 );
 		if( NULL == record )
 		{
-			message(ERR "Unable to allocate memory :( %zu bytes requested.\n", (size_t)*p_exponent_limit);
+			message(ERR "Unable to allocate memory :( %zu bytes requested.\n", (size_t)(*p_exponent_limit+7)/8);
 			exit(0);
 		}
 
 		// all zeros implicitly
-		bzero(record, (size_t)*p_exponent_limit);
+		bzero(record, (size_t)(*p_exponent_limit+7)/8);
 
 		// loop over the record
-		for(int byte = 0; byte < (*p_exponent_limit+7)/8; byte++)
+		if( (size_t)(*p_exponent_limit+7)/8 != fread(record, (size_t)1, (size_t)(*p_exponent_limit+7)/8, record_file) )
 		{
-			uint8_t b = 0;
-			
-			if( (size_t)1 != fread(&b, (size_t)1, (size_t)1, record_file) )
-			{
-				message(ERR "Unable to read from the record :( The file may be corrupted!\n");
-				break;
-			}
-
-			for(int bit = 0; bit < 8 && bit+byte*8 < *p_exponent_limit; bit++)
-			{
-				if( b & 1<<bit )
-				{
-					record[bit+byte*8] = 1;
-				}
-			}
+			message(ERR "Unable to read from the record :( The file may be corrupted!\n");
 		}
 
 		message("Loaded an existing record of %i exponents in size (%i MiB in memory, %i MiB in file)!\n",
 			(*p_exponent_limit),
-			(*p_exponent_limit + (1<<20) - 1)>>20,
+			(*p_exponent_limit + (1<<23) - 1)>>23,
 			(*p_exponent_limit + (1<<23) - 1)>>23
 		);
 
