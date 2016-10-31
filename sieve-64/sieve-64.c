@@ -111,9 +111,10 @@ int64_t int64_ceil_sqrt(int64_t n)
 	return x;
 }
 
-int is_prime(int p)
+int is_prime(int p, const char *primes)
 {
 	assert( p >= 0 );
+#if 0
 
 	if( p < 2 )
 		return 0;
@@ -133,6 +134,44 @@ int is_prime(int p)
 
 	// prime
 	return 1;
+#else
+	return !primes[p];
+#endif
+}
+
+// Sieve of Eratosthenes
+char *gen_prime_table(int exponent_limit)
+{
+	message("Creating prime table...\n");
+
+	char *primes = malloc(exponent_limit);
+
+	if( NULL == primes )
+	{
+		message(ERR "Unable to allocate memory.\n");
+		exit(0);
+	}
+
+	// initially: 0 = prime, 1 = composite
+	bzero(primes, exponent_limit);
+
+	primes[0] = 1;
+	primes[1] = 1;
+
+	for(int i = 2; i <= ceil_sqrt(exponent_limit); i++)
+	{
+		if( !primes[i] )
+		{
+			for(int j = i*i; j < exponent_limit; j += i)
+			{
+				primes[j] = 1;
+			}
+		}
+	}
+
+	message("The prime table was created.\n");
+
+	return primes;
 }
 
 int int64_is_prime(int64_t p)
@@ -193,7 +232,7 @@ int dlog2(int64_t p, int exponent_limit)
 	return 0;
 }
 
-void test(char *record, int64_t factor, int exponent_limit)
+void test(char *record, int64_t factor, int exponent_limit, const char *primes)
 {
 	if( INT64_0 == (factor & (factor+INT64_1)) )
 	{
@@ -211,14 +250,14 @@ void test(char *record, int64_t factor, int exponent_limit)
 	int n = dlog2(factor, exponent_limit);
 
 	// check if the exponent is prime
-	if( is_prime(n) )
+	if( is_prime(n, primes) )
 	{
 		// mark the M(n) as dirty
 		record[n] = 1;
 	}
 }
 
-void summary(const char *record, int exponent_limit)
+void summary(const char *record, int exponent_limit, const char *primes)
 {
 	int prime_total = 0; // prime exponents in total, Mersenne numbers
 	int prime_eliminated = 0; // dirty exponents, factor found
@@ -230,7 +269,7 @@ void summary(const char *record, int exponent_limit)
 
 	for(int n = 1; n < exponent_limit; n++)
 	{
-		if( is_prime(n) )
+		if( is_prime(n, primes) )
 		{
 			prime_total++;
 
@@ -349,7 +388,7 @@ void clock_dump(int64_t init_state, int64_t state)
 	);
 }
 
-void sieve(char *record, int64_t init_state, int exponent_limit, const char *record_path)
+void sieve(char *record, int64_t init_state, int exponent_limit, const char *record_path, const char *primes)
 {
 	// for 64 bits: 1 + 60 + 3
 	int64_t max_state = (INT64_1<<60) - INT64_1;
@@ -366,8 +405,8 @@ void sieve(char *record, int64_t init_state, int exponent_limit, const char *rec
 			message("Entering bit level %i...\n", __builtin_popcountll(factor7));
 		}
 
-		test(record, factor1, exponent_limit);
-		test(record, factor7, exponent_limit);
+		test(record, factor1, exponent_limit, primes);
+		test(record, factor7, exponent_limit, primes);
 
 		if( g_term )
 		{
@@ -391,7 +430,7 @@ void sieve(char *record, int64_t init_state, int exponent_limit, const char *rec
 			message("Current state is %" PRId64 ".\n", state);
 
 			// gather and print a progress overview
-			summary(record, exponent_limit);
+			summary(record, exponent_limit, primes);
 
 			clock_dump(init_state, state);
 
@@ -599,6 +638,9 @@ int main(int argc, char *argv[])
 	// load the record
 	char *record = record_load(&exponent_limit, record_path);
 
+	// create prime table
+	char *primes = gen_prime_table(exponent_limit);
+
 	// load the state
 	state_load(&init_state);
 
@@ -617,7 +659,7 @@ int main(int argc, char *argv[])
 	}
 
 	// start a loop
-	sieve(record, init_state, exponent_limit, record_path);
+	sieve(record, init_state, exponent_limit, record_path, primes);
 
 	free(record);
 
