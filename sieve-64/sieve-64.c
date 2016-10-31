@@ -30,6 +30,8 @@ int message(const char *format, ...)
 	n += vprintf(format, ap);
 	va_end(ap);
 
+	fflush(stdout);
+
 	return n;
 }
 
