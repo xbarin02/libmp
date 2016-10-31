@@ -287,6 +287,7 @@ int dlog2(int64_t p, int exponent_limit)
 
 	int k = 0;
 
+#if 0
 	while( k < k1 )
 	{
 		// b^k = b^k * b = b^(k+1)
@@ -301,6 +302,19 @@ int dlog2(int64_t p, int exponent_limit)
 			return k;
 	}
 	// FIXME: m=0 never become 1 (although, probably not valid for p : PRIME)
+#else
+	while( k < k1 )
+	{
+		if( m & 1 )
+			m += p;
+		m >>= 1;
+
+		k++;
+
+		if( INT64_1 == m )
+			return k;
+	}
+#endif
 
 	// fallback
 	return 0;
