@@ -7,4 +7,3 @@ BIN=sieve-64
 
 .PHONY: all
 all: $(BIN)
-
