@@ -371,7 +371,7 @@ void summary(const char *record, int exponent_limit, const char *primes)
 			else
 			{
 				prime_candidates++;
-				
+
 				if(!first_candidate)
 				{
 					first_candidate = n;
@@ -621,7 +621,7 @@ void state_load(int64_t *p_init_state)
 			*p_init_state = INT64_1;
 		}
 
-		message("There is no saved state, starting from %" PRId64 "...\n", *p_init_state);
+		message("There is no state to restore, starting from %" PRId64 "...\n", *p_init_state);
 	}
 	else
 	{
