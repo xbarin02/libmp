@@ -519,6 +519,8 @@ int64_t int64_primorial(int n)
 		p *= small_primes[i+1];
 	}
 
+	assert( p > INT64_0 );
+
 	return p;
 }
 
@@ -574,23 +576,6 @@ void sieve(char *record, int exponent_limit, const char *record_path, const char
 	int64_t states = INT64_0;
 	for(;; states++)
 	{
-#if 0
-		int64_t random;
-		if( (size_t)1 != fread(&random, sizeof(int64_t), (size_t)1, random_file) )
-		{
-			message(ERR "Unable to get a random value!\n");
-		}
-
-		random &= ~( UINT64_C(1) << (sizeof(int64_t) * 8 - 1) | UINT64_C(7) );
-
-		int64_t factor1 = random + INT64_1;
-		int64_t factor7 = random - INT64_1;
-
-		message("testing seed %" PRId64 "...\n", random);
-
-		test(record, factor1, exponent_limit, primes);
-		test(record, factor7, exponent_limit, primes);
-#else
 		// random difficulty level
 		int n = random_difficulty(random_file);
 		int64_t primorial = int64_primorial(n); // also offset modulus
@@ -613,10 +598,10 @@ void sieve(char *record, int exponent_limit, const char *record_path, const char
 		// prime = q * primorial + offset
 		int64_t factor = q * primorial + s;
 
-		message(DBG "Testing random prime factor [difficulty %i] %" PRId64 " = %" PRId64 " * %" PRId64 " + %" PRId64 "...\n", n, factor, q, primorial, s);
+		// message(DBG "Testing random prime factor [difficulty %i] %" PRId64 " = %" PRId64 " * %" PRId64 " + %" PRId64 "...\n", n, factor, q, primorial, s);
 
 		test(record, factor, exponent_limit, primes);
-#endif
+
 		if( g_term )
 		{
 			// exit the program
