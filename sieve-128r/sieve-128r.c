@@ -576,6 +576,24 @@ int random_difficulty(FILE *random_file)
 	return n;
 }
 
+static
+int128_t int128_random_prime(int n, FILE *random_file)
+{
+	if(0 == n) return 1;
+
+	int128_t primorial = int128_primorial(n);
+	int128_t modulus = int128_prime(n+1);
+
+	int128_t q;
+	do { q = int128_random(random_file); } while( q < INT128_0 );
+	q %= modulus;
+
+	int128_t s;
+	do { s = int128_random_prime(n-1, random_file); } while( INT128_1 != s && s < modulus );
+
+	return q * primorial + s;
+}
+
 void sieve(char *record, int exponent_limit, const char *record_path, const char *primes, FILE *random_file)
 {
 	clock_gettime(CLOCK_REALTIME, &g_tp0);
@@ -587,36 +605,13 @@ void sieve(char *record, int exponent_limit, const char *record_path, const char
 	{
 		// random difficulty level
 		int n = random_difficulty(random_file);
-		int128_t primorial = int128_primorial(n); // also offset modulus
-		int128_t modulus = int128_prime(n+1); // also min. offset
 
-		int128_t q;
-		do { q = int128_random(random_file); } while( q < INT128_0 );
-		q %= modulus;
+		int128_t factor = int128_random_prime(n, random_file);
 
-		int128_t s;
-		do { s = int128_random(random_file); } while( s < INT128_0 );
-		s %= primorial;
-
-		// FIXME: while( !int128_is_prime(s) || s < modulus )
-		while( !int128_is_prime_fast(s) || s < modulus )
-		{
-			s++;
-			s %= primorial;
-		}
-
-		// prime = q * primorial + offset
-		int128_t factor = q * primorial + s;
-
-#if 1
-		message(DBG "Testing random prime factor [difficulty %i] %" PRId64 ":%" PRId64 " = %" PRId64 ":%" PRId64 " * %" PRId64 ":%" PRId64 " + %" PRId64 ":%" PRId64 "...\n",
+		message(DBG "Testing random prime factor [difficulty %i] %" PRId64 ":%" PRId64 "...\n",
 			n,
-			INT128_H64(factor), INT128_L64(factor),
-			INT128_H64(q), INT128_L64(q),
-			INT128_H64(primorial), INT128_L64(primorial),
-			INT128_H64(s), INT128_L64(s)
+			INT128_H64(factor), INT128_L64(factor)
 		);
-#endif
 
 		test(record, factor, exponent_limit, primes);
 
