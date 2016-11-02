@@ -379,11 +379,13 @@ void test(char *record, int64_t factor, int exponent_limit, const char *primes)
 	if( (INT64_C(1) != (factor&INT64_C(7))) && (INT64_C(7) != (factor&INT64_C(7))) )
 		return;
 
+#if 0
 	if( !int64_is_prime_fast(factor) )
 	{
 		// not a prime factor, skip them
 		return;
 	}
+#endif
 
 	// find M(n)
 	int n = dlog2(factor, exponent_limit);
@@ -557,14 +559,57 @@ int random(FILE *random_file)
 static
 int random_difficulty(FILE *random_file)
 {
-	const int n0 = 7; // inclusive
-	const int n1 = 14; // exclusive
+	const int n0 = 8; // inclusive
+	const int n1 = 11; // exclusive
 
 	int n;
 	do { n = random(random_file); } while( n < 0 );
 	n = n0 + n%(n1-n0);
 
 	return n;
+}
+
+static
+int64_t int64_random_prime(int n, FILE *random_file)
+{
+	if(0 == n) return 1;
+
+	int64_t primorial = int64_primorial(n);
+	int64_t modulus = int64_prime(n+1);
+
+	int64_t q;
+	do { q = int64_random(random_file); } while( q < INT64_0 );
+	q %= modulus;
+
+	int64_t s;
+	do { s = int64_random_prime(n-1, random_file); } while( INT64_1 != s && s < modulus );
+
+	return q * primorial + s;
+}
+
+static
+int64_t int64_random_prime_fast(int n, FILE *random_file)
+{
+	uint64_t r = int64_random(random_file);
+
+	// previous prime
+	uint64_t s = INT64_1;
+
+	for(int k = 1; k <= n; k++)
+	{
+		uint64_t m = int64_prime(k+1);
+		uint64_t p = int64_primorial(k);
+		uint64_t q = r%m;
+		r /= m;
+
+#if 0
+		s = (s==INT64_1 || s>=m) ? s : INT64_1;
+#endif
+
+		s = q*p + s;
+	}
+
+	return s;
 }
 
 void sieve(char *record, int exponent_limit, const char *record_path, const char *primes, FILE *random_file)
@@ -578,27 +623,14 @@ void sieve(char *record, int exponent_limit, const char *record_path, const char
 	{
 		// random difficulty level
 		int n = random_difficulty(random_file);
-		int64_t primorial = int64_primorial(n); // also offset modulus
-		int64_t modulus = int64_prime(n+1); // also min. offset
 
-		int64_t q;
-		do { q = int64_random(random_file); } while( q < 0 );
-		q %= modulus;
+#if 0
+		int64_t factor = int64_random_prime(n, random_file);
+#else
+		int64_t factor = int64_random_prime_fast(n, random_file);
+#endif
 
-		int64_t s;
-		do { s = int64_random(random_file); } while( s < 0 );
-		s %= primorial;
-
-		while( !int64_is_prime(s) || s < modulus )
-		{
-			s++;
-			s %= primorial;
-		}
-
-		// prime = q * primorial + offset
-		int64_t factor = q * primorial + s;
-
-		// message(DBG "Testing random prime factor [difficulty %i] %" PRId64 " = %" PRId64 " * %" PRId64 " + %" PRId64 "...\n", n, factor, q, primorial, s);
+		message(DBG "Testing random prime factor [difficulty %i] %" PRIu64 "...\n", n, factor);
 
 		test(record, factor, exponent_limit, primes);
 
