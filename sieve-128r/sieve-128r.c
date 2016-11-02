@@ -388,11 +388,13 @@ void test(char *record, int128_t factor, int exponent_limit, const char *primes)
 	if( (INT128_C(1) != (factor&INT128_C(7))) && (INT128_C(7) != (factor&INT128_C(7))) )
 		return;
 
+#if 0
 	if( !int128_is_prime_fast(factor) )
 	{
 		// not a prime factor, skip them
 		return;
 	}
+#endif
 
 	// find M(n)
 	int n = dlog2(factor, exponent_limit);
@@ -566,8 +568,8 @@ int random(FILE *random_file)
 static
 int random_difficulty(FILE *random_file)
 {
-	const int n0 = 7; // inclusive
-	const int n1 = 20; // exclusive
+	const int n0 = 8; // inclusive
+	const int n1 = 11; // exclusive
 
 	int n;
 	do { n = random(random_file); } while( n < 0 );
@@ -594,6 +596,31 @@ int128_t int128_random_prime(int n, FILE *random_file)
 	return q * primorial + s;
 }
 
+static
+int128_t int128_random_prime_fast(int n, FILE *random_file)
+{
+	uint128_t r = int128_random(random_file);
+
+	// previous prime
+	uint128_t s = INT128_1;
+
+	for(int k = 1; k <= n; k++)
+	{
+		uint128_t m = int128_prime(k+1);
+		uint128_t p = int128_primorial(k);
+		uint128_t q = r%m;
+		r /= m;
+
+#if 0
+		s = (s==INT128_1 || s>=m) ? s : INT128_1;
+#endif
+
+		s = q*p + s;
+	}
+
+	return s;
+}
+
 void sieve(char *record, int exponent_limit, const char *record_path, const char *primes, FILE *random_file)
 {
 	clock_gettime(CLOCK_REALTIME, &g_tp0);
@@ -606,9 +633,13 @@ void sieve(char *record, int exponent_limit, const char *record_path, const char
 		// random difficulty level
 		int n = random_difficulty(random_file);
 
+#if 0
 		int128_t factor = int128_random_prime(n, random_file);
+#else
+		int128_t factor = int128_random_prime_fast(n, random_file);
+#endif
 
-		message(DBG "Testing random prime factor [difficulty %i] %" PRId64 ":%" PRId64 "...\n",
+		message(DBG "Testing random prime factor [difficulty %i] %" PRIu64 ":%" PRIu64 "...\n",
 			n,
 			INT128_H64(factor), INT128_L64(factor)
 		);
