@@ -519,6 +519,10 @@ void sieve(char *record, int64_t init_state, int exponent_limit, const char *rec
 	// save the record and state
 	record_save(record, exponent_limit, record_path);
 	state_save(max_state+INT64_1);
+
+	// gather and print a progress overview
+	summary(record, exponent_limit, primes);
+
 	clock_dump(init_state, max_state);
 }
 
