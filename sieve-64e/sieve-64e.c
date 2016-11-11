@@ -367,13 +367,13 @@ int dlog2(int64_t p, int exponent_limit)
 
 void test(char *record, int64_t factor, int exponent_limit, const char *primes)
 {
-	assert( factor > INT64_0 );
-
 	if( INT64_0 == (factor & (factor+INT64_1)) )
 	{
 		// skip M itself
 		return;
 	}
+
+	assert( factor > INT64_0 );
 
 	// check if the factor \equiv \pm 1 in \pmod 8
 	if( (INT64_C(1) != (factor&INT64_C(7))) && (INT64_C(7) != (factor&INT64_C(7))) )
@@ -559,8 +559,8 @@ int random(FILE *random_file)
 static
 int random_difficulty(FILE *random_file)
 {
-	const int n0 = 8; // inclusive
-	const int n1 = 11; // exclusive
+	const int n0 = 35; // inclusive
+	const int n1 = n0+1; // exclusive
 
 	int n;
 	do { n = random(random_file); } while( n < 0 );
@@ -588,15 +588,15 @@ int64_t int64_random_prime(int n, FILE *random_file)
 }
 
 static
-int64_t int64_random_factor(FILE *random_file)
+int64_t int64_random_factor(int n, FILE *random_file)
 {
 	uint64_t r = int64_random(random_file);
 
 	r >>= 4;
 
 	// anti-difficulty
-	// int s = 60 - n;
-	// r >>= s;
+	int s = 60 - n;
+	r >>= s;
 
 	return r*8 + ( (r&1)?(+1):(-1) );
 }
@@ -636,11 +636,11 @@ void sieve(char *record, int exponent_limit, const char *record_path, const char
 	for(;; states++)
 	{
 		// random difficulty level
-// 		int n = random_difficulty(random_file);
+		int n = random_difficulty(random_file);
 
-		int64_t factor = int64_random_factor(random_file);
+		int64_t factor = int64_random_factor(n, random_file);
 
-		message(DBG "Testing random prime factor [difficulty %i] %" PRIu64 "...\n", 0, factor);
+		message(DBG "Testing random prime factor [difficulty %i] %" PRIu64 "...\n", n, factor);
 
 		test(record, factor, exponent_limit, primes);
 
