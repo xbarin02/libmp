@@ -156,27 +156,28 @@ static
 int64_t dlog2_bga_qsort(int64_t p)
 {
 	int64_t m = int64_ceil_sqrt(p);
+	int64_t m1 = m-INT64_1;
 
-	int64_t tab[2*m];
+	int64_t tab[2*m1];
 
-	int64_t aj = INT64_1;
-	for(int64_t j = INT64_0; j < m; j++)
+	int64_t aj = INT64_2;
+	for(int64_t j = INT64_1; j < m; j++)
 	{
-		tab[2*j+0] = aj;
-		tab[2*j+1] = j;
+		tab[2*j-2+0] = aj;
+		tab[2*j-2+1] = j;
 		aj <<= 1;
 		if( aj >= p )
 			aj -= p;
 	}
 
-	qsort(tab+2, m-INT64_1, 2*sizeof(int64_t), cmp_int64);
+	qsort(tab, m1, 2*sizeof(int64_t), cmp_int64);
 
 	int64_t am = dlog2_r_lsb(p, m);
 
 	int64_t y = INT64_1;
 	for(int64_t i = INT64_0; i < m; i++)
 	{
-		const int64_t *res = bsearch_(&y, tab+2, m-INT64_1, 2*sizeof(int64_t), cmp_int64);
+		const int64_t *res = bsearch_(&y, tab, m1, 2*sizeof(int64_t), cmp_int64);
 		if( res )
 		{
 			return i*m + *(res+1);
@@ -231,7 +232,7 @@ int main(int argc, char *argv[])
 {
 #if 0
 	volatile int64_t a;
-	for(int64_t f = 1; f < 1000000; f++)
+	for(int64_t f = 1; f < 1000000; f+=2)
 		//a = dlog2_lsb(f);
 		//a = dlog2_msb(f);
 		//a = dlog2_bga(f);
