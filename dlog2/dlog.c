@@ -110,11 +110,56 @@ int64_t int64_ceil_sqrt(int64_t n)
 	return x;
 }
 
+static int cmp_int64(const void *p1, const void *p2)
+{
+	return (*(const int64_t *)p2) - (*(const int64_t *)p1);
+}
+
 // TODO
 // (1) qsort, bsearch
+// * for p < 100000 is slower
+// * for p < 1000000 is much faster
 // (2) limit tab[m] to fit into cache size
+// (3) check for overflow ... https://gcc.gnu.org/onlinedocs/gcc/Integer-Overflow-Builtins.html
 
 // https://en.wikipedia.org/wiki/Baby-step_giant-step
+int64_t dlog2_bga_qsort(int64_t p)
+{
+	int64_t m = int64_ceil_sqrt(p);
+
+	int64_t tab[2*m];
+
+	int64_t aj = INT64_1;
+	for(int64_t j = INT64_0; j < m; j++)
+	{
+		tab[2*j+0] = aj;
+		tab[2*j+1] = j;
+		aj <<= 1;
+		if( aj >= p )
+			aj -= p;
+	}
+
+	qsort(tab+2, m-INT64_1, 2*sizeof(int64_t), cmp_int64);
+
+	int64_t am = dlog2_r_lsb(p, m);
+
+	int64_t y = INT64_1;
+	for(int64_t i = INT64_0; i < m; i++)
+	{
+		const int64_t *res = bsearch( &y, tab+2, m-INT64_1, 2*sizeof(int64_t), cmp_int64);
+		if( res )
+		{
+			return i*m + *(res+1);
+		}
+
+		y *= am;
+		y %= p;
+	}
+
+	assert( "failure" );
+	return 0;
+}
+
 int64_t dlog2_bga(int64_t p)
 {
 	int64_t m = int64_ceil_sqrt(p);
@@ -153,6 +198,16 @@ int64_t dlog2_bga(int64_t p)
 
 int main(int argc, char *argv[])
 {
+#if 0
+	volatile int64_t a;
+	for(int64_t f = 1; f < 1000000; f++)
+		//a = dlog2_lsb(f);
+		//a = dlog2_msb(f);
+		//a = dlog2_bga(f);
+		a = dlog2_bga_qsort(f);
+	(void)a;
+#endif
+#if 1
 	switch(argc)
 	{
 		case 1:
@@ -177,6 +232,6 @@ int main(int argc, char *argv[])
 		default:
 			return main(1, argv);
 	}
-
+#endif
 	return 0;
 }
