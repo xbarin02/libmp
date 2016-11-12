@@ -8,6 +8,7 @@
 #define INT64_1 INT64_C(1)
 #define INT64_2 INT64_C(2)
 
+static
 int64_t dlog2_msb(int64_t p)
 {
 	assert( p > INT64_0 );
@@ -32,6 +33,7 @@ int64_t dlog2_msb(int64_t p)
 	return INT64_0;
 }
 
+static
 int64_t dlog2_r_msb(int64_t p, int64_t K)
 {
 	assert( p > INT64_0 );
@@ -51,6 +53,7 @@ int64_t dlog2_r_msb(int64_t p, int64_t K)
 	return m;
 }
 
+static
 int64_t dlog2_lsb(int64_t p)
 {
 	assert( p > INT64_0 );
@@ -75,6 +78,7 @@ int64_t dlog2_lsb(int64_t p)
 	return INT64_0;
 }
 
+static
 int64_t dlog2_r_lsb(int64_t p, int64_t K)
 {
 	assert( p > INT64_0 );
@@ -94,6 +98,7 @@ int64_t dlog2_r_lsb(int64_t p, int64_t K)
 	return m;
 }
 
+static
 int64_t int64_ceil_sqrt(int64_t n)
 {
 	assert( n > INT64_0 );
@@ -110,7 +115,31 @@ int64_t int64_ceil_sqrt(int64_t n)
 	return x;
 }
 
-static int cmp_int64(const void *p1, const void *p2)
+// http://lxr.free-electrons.com/source/lib/sort.c
+static
+void *bsearch_(const void *key, const void *base, size_t num, size_t size,
+		int (*cmp)(const void *key, const void *elt))
+{
+	size_t start = 0, end = num;
+	int result;
+
+	while (start < end) {
+		size_t mid = start + (end - start) / 2;
+
+		result = cmp(key, (int8_t *)base + mid * size);
+		if (result < 0)
+			end = mid;
+		else if (result > 0)
+			start = mid + 1;
+		else
+			return (int8_t *)base + mid * size;
+	}
+
+	return NULL;
+}
+
+static
+int cmp_int64(const void *p1, const void *p2)
 {
 	return (*(const int64_t *)p2) - (*(const int64_t *)p1);
 }
@@ -123,6 +152,7 @@ static int cmp_int64(const void *p1, const void *p2)
 // (3) check for overflow ... https://gcc.gnu.org/onlinedocs/gcc/Integer-Overflow-Builtins.html
 
 // https://en.wikipedia.org/wiki/Baby-step_giant-step
+static
 int64_t dlog2_bga_qsort(int64_t p)
 {
 	int64_t m = int64_ceil_sqrt(p);
@@ -146,7 +176,7 @@ int64_t dlog2_bga_qsort(int64_t p)
 	int64_t y = INT64_1;
 	for(int64_t i = INT64_0; i < m; i++)
 	{
-		const int64_t *res = bsearch( &y, tab+2, m-INT64_1, 2*sizeof(int64_t), cmp_int64);
+		const int64_t *res = bsearch_(&y, tab+2, m-INT64_1, 2*sizeof(int64_t), cmp_int64);
 		if( res )
 		{
 			return i*m + *(res+1);
@@ -160,6 +190,7 @@ int64_t dlog2_bga_qsort(int64_t p)
 	return 0;
 }
 
+static
 int64_t dlog2_bga(int64_t p)
 {
 	int64_t m = int64_ceil_sqrt(p);
