@@ -110,6 +110,10 @@ int64_t int64_ceil_sqrt(int64_t n)
 	return x;
 }
 
+// TODO
+// (1) qsort, bsearch
+// (2) limit tab[m] to fit into cache size
+
 // https://en.wikipedia.org/wiki/Baby-step_giant-step
 int64_t dlog2_bga(int64_t p)
 {
@@ -131,17 +135,14 @@ int64_t dlog2_bga(int64_t p)
 	int64_t y = INT64_1;
 	for(int64_t i = INT64_0; i < m; i++)
 	{
-		// because 2^0 == 1
-		if( i > INT64_0 )
+		for(int64_t j = INT64_1; j < m; j++)
 		{
-			for(int64_t j = INT64_0; j < m; j++)
+			if( y == tab[j] )
 			{
-				if( y == tab[j] )
-				{
-					return i*m + j;
-				}
+				return i*m + j;
 			}
 		}
+
 		y *= am;
 		y %= p;
 	}
