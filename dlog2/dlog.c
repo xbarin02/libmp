@@ -3,6 +3,7 @@
 #include <inttypes.h>
 #include <assert.h>
 #include <stdlib.h>
+#include <limits.h>
 
 #define INT64_0 INT64_C(0)
 #define INT64_1 INT64_C(1)
@@ -145,11 +146,13 @@ int cmp_int64(const void *p1, const void *p2)
 }
 
 // TODO
-// (1) qsort, bsearch
-// * for p < 100000 is slower
-// * for p < 1000000 is much faster
-// (2) limit tab[m] to fit into cache size
-// (3) check for overflow ... https://gcc.gnu.org/onlinedocs/gcc/Integer-Overflow-Builtins.html
+// [x] qsort, bsearch
+//     * for p < 100000 is slower
+//     * for p < 1000000 is much faster
+//     * for p < 10000000 test takes too long
+// [ ] limit tab[m] to fit into cache size
+// [x] check for overflow ... https://gcc.gnu.org/onlinedocs/gcc/Integer-Overflow-Builtins.html
+// [ ] is 1 found order among baby steps?
 
 // https://en.wikipedia.org/wiki/Baby-step_giant-step
 static
@@ -173,6 +176,12 @@ int64_t dlog2_bga_qsort(int64_t p)
 	qsort(tab, m1, 2*sizeof(int64_t), cmp_int64);
 
 	int64_t am = dlog2_r_lsb(p, m);
+
+	if( p > INT64_1 && am > INT64_MAX / (p-INT64_1) )
+	{
+		printf("WARNING: 'y *= am' could overflow!\n");
+		return dlog2_lsb(p);
+	}
 
 	int64_t y = INT64_1;
 	for(int64_t i = INT64_0; i < m; i++)
@@ -250,7 +259,7 @@ int main(int argc, char *argv[])
 			int64_t f = atol(argv[1]);
 			printf("dlog2(%" PRId64 ") = %" PRId64 " (LSB)\n", f, dlog2_lsb(f));
 			printf("dlog2(%" PRId64 ") = %" PRId64 " (MSB)\n", f, dlog2_msb(f));
-			printf("dlog2(%" PRId64 ") = %" PRId64 " (BGA)\n", f, dlog2_bga(f));
+			printf("dlog2(%" PRId64 ") = %" PRId64 " (BGA)\n", f, dlog2_bga_qsort(f));
 		}
 			break;
 		case 3:
