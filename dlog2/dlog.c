@@ -154,7 +154,7 @@ int64_t int64_ceil_div(int64_t a, int64_t b)
 
 // TODO
 // [x] qsort, bsearch
-//     * for p < 100000 is slower
+//     * for p < 100000 is faster (when m = sqrt(p)/3)
 //     * for p < 1000000 is much faster
 //     * for p < 10000000 is much faster
 // [x] limit tab[m] to fit into cache size
@@ -169,12 +169,12 @@ int64_t dlog2_bga_qsort(int64_t p)
 
 	if( INT64_1 == p ) return INT64_0;
 
-	int64_t m = int64_ceil_sqrt(p);
+	int64_t m = int64_ceil_div(int64_ceil_sqrt(p), 3);
 
 	// FIXME: timing on AMD Athlon 64 4000+
-	// FIXME: 1k .. 64s // 2k .. 42s // 4k .. 35s // 8k .. 43s // 16k .. 56s // 32k .. 56s // 512k .. 56s // dlog2_lsb .. 107s // for p < 1000000
-	// FIXME: 1k .. 5415s // 2k .. 3107s // 4k .. 1826s // 8k .. 1261s // 16k ..1258s // 32k .. 1758s // 64k .. 2070s // 512k .. 2078s // dlog2_lsb .. 9551s // for p < 10000000
-	size_t cache_size = 16<<10;
+	// FIXME: 1k .. 64s // 2k .. 42s // 4k .. 35s // 8k .. 43s // 16k .. 56s // 32k .. 56s // 512k .. 56s // dlog2_lsb .. 107s // for p < 1000000 // sqrt(p)/3 .. 33s
+	// FIXME: 1k .. 5415s // 2k .. 3107s // 4k .. 1826s // 8k .. 1261s // 16k ..1258s // 32k .. 1758s // 64k .. 2070s // 512k .. 2078s // dlog2_lsb .. 9551s // for p < 10000000 // sqrt(p)/3 .. 1149s
+	size_t cache_size = 1<<20;
 	if( 2*m*sizeof(int64_t) > cache_size )
 		m = cache_size/2/sizeof(int64_t);
 	int64_t n = int64_ceil_div(p, m);
@@ -270,7 +270,7 @@ int64_t dlog2_bga(int64_t p)
 int main(int argc, char *argv[])
 {
 #if 0
-	for(int64_t f = 1; f < 100000; f+=2)
+	for(int64_t f = 1; f < 100000; f += 2)
 	{
 		//if( dlog2_lsb(f) != dlog2_msb(f) )
 		//if( dlog2_lsb(f) != dlog2_bga(f) )
@@ -283,7 +283,7 @@ int main(int argc, char *argv[])
 #endif
 #if 0
 	volatile int64_t a;
-	for(int64_t f = 1; f < 1000000; f+=2)
+	for(int64_t f = 1; f < 1000000; f += 2)
 		//a = dlog2_lsb(f);
 		//a = dlog2_msb(f);
 		//a = dlog2_bga(f);
