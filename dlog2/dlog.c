@@ -158,6 +158,10 @@ int cmp_int64(const void *p1, const void *p2)
 static
 int64_t dlog2_bga_qsort(int64_t p)
 {
+	assert( p > INT64_0 && (p & INT64_1) );
+
+	if( INT64_1 == p ) return INT64_0;
+
 	int64_t m = int64_ceil_sqrt(p);
 
 	int64_t tab[2*m];
@@ -203,6 +207,10 @@ int64_t dlog2_bga_qsort(int64_t p)
 static
 int64_t dlog2_bga(int64_t p)
 {
+	assert( p > INT64_0 && (p & INT64_1) );
+
+	if( INT64_1 == p ) return INT64_0;
+
 	int64_t m = int64_ceil_sqrt(p);
 
 	int64_t tab[m];
@@ -247,7 +255,7 @@ int64_t dlog2_bga(int64_t p)
 int main(int argc, char *argv[])
 {
 #if 0
-	for(int64_t f = 3; f < 100000; f+=2)
+	for(int64_t f = 1; f < 100000; f+=2)
 	{
 		//if( dlog2_lsb(f) != dlog2_msb(f) )
 		//if( dlog2_lsb(f) != dlog2_bga(f) )
