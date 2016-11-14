@@ -2,6 +2,7 @@
 
 #include <stdint.h>
 #include <assert.h>
+#include <stddef.h>
 
 // 2^(+k) (mod p) [MSB, slower]
 static
@@ -336,3 +337,89 @@ int128_t int128_dlog2_pl_lim(int128_t p, int128_t L)
 }
 
 int128_t mp_int128_dlog2_pl_lim(int128_t p, int128_t L) { return int128_dlog2_pl_lim(p, L); }
+
+int64_t int64_ceil_sqrt(int64_t n)
+{
+	assert( n > INT64_0 );
+
+	int64_t x = n;
+	int64_t y = INT64_0;
+
+	while(x != y)
+	{
+		y = x;
+		x = (x + (n + x - INT64_1)/x + INT64_1) >> 1;
+	}
+
+	return x;
+}
+
+int64_t mp_int64_ceil_sqrt(int64_t n) { return int64_ceil_sqrt(n); }
+
+int128_t int128_ceil_sqrt(int128_t n)
+{
+	assert( n > INT128_0 );
+
+	int128_t x = n;
+	int128_t y = INT128_0;
+
+	while(x != y)
+	{
+		y = x;
+		x = (x + (n + x - INT128_1)/x + INT128_1) >> 1;
+	}
+
+	return x;
+}
+
+int128_t mp_int128_ceil_sqrt(int128_t n) { return int128_ceil_sqrt(n); }
+
+static
+int64_t int64_ceil_div(int64_t a, int64_t b)
+{
+	return (a + b - INT64_1) / b;
+}
+
+int64_t mp_int64_ceil_div(int64_t a, int64_t b) { return int64_ceil_div(a, b); }
+
+static
+int128_t int128_ceil_div(int128_t a, int128_t b)
+{
+	return (a + b - INT128_1) / b;
+}
+
+int128_t mp_int128_ceil_div(int128_t a, int128_t b) { return int128_ceil_div(a, b); }
+
+static
+int int64_cmp(const void *p1, const void *p2)
+{
+	return (*(const int64_t *)p2) - (*(const int64_t *)p1);
+}
+
+static
+int int128_cmp(const void *p1, const void *p2)
+{
+	return (*(const int128_t *)p2) - (*(const int128_t *)p1);
+}
+
+static
+void *bsearch_(const void *key, const void *base, size_t num, size_t size,
+		int (*cmp)(const void *key, const void *elt))
+{
+	size_t start = 0, end = num;
+	int result;
+
+	while (start < end) {
+		size_t mid = start + (end - start) / 2;
+
+		result = cmp(key, (int8_t *)base + mid * size);
+		if (result < 0)
+			end = mid;
+		else if (result > 0)
+			start = mid + 1;
+		else
+			return (int8_t *)base + mid * size;
+	}
+
+	return NULL;
+}
