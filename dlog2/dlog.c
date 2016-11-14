@@ -57,7 +57,7 @@ int64_t dlog2_r_msb(int64_t p, int64_t K)
 static
 int64_t dlog2_lsb(int64_t p)
 {
-	assert( p > INT64_0 );
+	assert( p > INT64_0 && (p & INT64_1) );
 
 	int64_t m = INT64_1;
 	int64_t k = INT64_0;
@@ -299,8 +299,8 @@ int main(int argc, char *argv[])
 		case 2:
 		{
 			int64_t f = atol(argv[1]);
-			printf("dlog2(%" PRId64 ") = %" PRId64 " (LSB)\n", f, dlog2_lsb(f));
 			printf("dlog2(%" PRId64 ") = %" PRId64 " (MSB)\n", f, dlog2_msb(f));
+			printf("dlog2(%" PRId64 ") = %" PRId64 " (LSB)\n", f, dlog2_lsb(f));
 			printf("dlog2(%" PRId64 ") = %" PRId64 " (BGA)\n", f, dlog2_bga_qsort(f));
 		}
 			break;
@@ -308,8 +308,8 @@ int main(int argc, char *argv[])
 		{
 			int64_t f = atol(argv[1]);
 			int64_t r = atol(argv[2]);
-			printf("alpha(dlog2(%" PRId64 ")=%" PRId64 ") = %" PRId64 " (LSB)\n", f, r, dlog2_r_lsb(f, r));
-			printf("alpha(dlog2(%" PRId64 ")=%" PRId64 ") = %" PRId64 " (MSB)\n", f, r, dlog2_r_msb(f, r));
+			printf("(mod %" PRId64 ") 2^(+%" PRId64 ") = %" PRId64 " (MSB)\n", f, r, dlog2_r_msb(f, r));
+			printf("(mod %" PRId64 ") 2^(-%" PRId64 ") = %" PRId64 " (LSB)\n", f, r, dlog2_r_lsb(f, r));
 		}
 			break;
 		default:
