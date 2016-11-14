@@ -320,6 +320,116 @@ int dlog2(int64_t p, int exponent_limit)
 	return 0;
 }
 
+static
+int64_t dlog2_r_lsb(int64_t p, int64_t K)
+{
+	assert( p > INT64_0 );
+
+	int64_t m = INT64_1;
+	int64_t k = INT64_0;
+
+	while( k < K )
+	{
+		if( m & INT64_1 )
+			m += p;
+		m >>= 1;
+
+		k++;
+	}
+
+	return m;
+}
+
+static
+void *bsearch_(const void *key, const void *base, size_t num, size_t size,
+		int (*cmp)(const void *key, const void *elt))
+{
+	size_t start = 0, end = num;
+	int result;
+
+	while (start < end) {
+		size_t mid = start + (end - start) / 2;
+
+		result = cmp(key, (int8_t *)base + mid * size);
+		if (result < 0)
+			end = mid;
+		else if (result > 0)
+			start = mid + 1;
+		else
+			return (int8_t *)base + mid * size;
+	}
+
+	return NULL;
+}
+
+static
+int cmp_int64(const void *p1, const void *p2)
+{
+	return (*(const int64_t *)p2) - (*(const int64_t *)p1);
+}
+
+static
+int64_t int64_ceil_div(int64_t a, int64_t b)
+{
+	return (a + b - INT64_1) / b;
+}
+
+static
+int64_t dlog2_bga_qsort_limit(int64_t p, int64_t exponent_limit)
+{
+	assert( p > INT64_0 && (p & INT64_1) );
+
+	if( INT64_1 == p ) return INT64_0;
+
+	int64_t m = int64_ceil_div(int64_ceil_sqrt(p), 3);
+
+	size_t cache_size = 1<<20;
+	if( 2*m*sizeof(int64_t) > cache_size )
+		m = cache_size/2/sizeof(int64_t);
+	int64_t n = int64_ceil_div(p, m);
+
+	int64_t tab[2*m];
+
+	int64_t aj = INT64_1;
+	for(int64_t j = INT64_0; j < m; j++)
+	{
+		tab[2*j+0] = aj;
+		tab[2*j+1] = j;
+		aj <<= 1;
+		if( aj >= p )
+			aj -= p;
+		if( INT64_1 == aj ) return j+INT64_1;
+	}
+
+	qsort(tab, m, 2*sizeof(int64_t), cmp_int64);
+
+	int64_t am = dlog2_r_lsb(p, m);
+
+	if( p > INT64_1 && am > INT64_MAX / (p-INT64_1) )
+	{
+		message(WARN "'y *= am' could overflow!\n");
+		return dlog2(p, exponent_limit);
+	}
+
+	// i*m < exponent_limit
+	int64_t i_limit = int64_ceil_div(exponent_limit, m);
+
+	int64_t y = am;
+	for(int64_t i = INT64_1; i < n && i <= i_limit; i++)
+	{
+		const int64_t *res = bsearch_(&y, tab, m, 2*sizeof(int64_t), cmp_int64);
+		if( res )
+		{
+			return i*m + *(res+1);
+		}
+
+		y *= am;
+		y %= p;
+	}
+
+	return 0;
+}
+
 void test(char *record, int64_t factor, int exponent_limit, const char *primes)
 {
 	if( INT64_0 == (factor & (factor+INT64_1)) )
@@ -335,7 +445,11 @@ void test(char *record, int64_t factor, int exponent_limit, const char *primes)
 	}
 
 	// find M(n)
-	int n = dlog2(factor, exponent_limit);
+	int n = dlog2_bga_qsort_limit(factor, exponent_limit);
+
+	// NOTE: dlog2_bga_qsort_limit can return 'n >= exponent_limit'
+	if( n >= exponent_limit )
+		return;
 
 	// check if the exponent is prime
 	if( is_prime(n, primes) )
