@@ -220,6 +220,62 @@ int64_t dlog2_bga_qsort(int64_t p)
 }
 
 static
+int64_t dlog2_bga_qsort_limit(int64_t p, int64_t exponent_limit)
+{
+	assert( p > INT64_0 && (p & INT64_1) );
+
+	if( INT64_1 == p ) return INT64_0;
+
+	int64_t m = int64_ceil_div(int64_ceil_sqrt(p), 3);
+
+	size_t cache_size = 1<<20;
+	if( 2*m*sizeof(int64_t) > cache_size )
+		m = cache_size/2/sizeof(int64_t);
+	int64_t n = int64_ceil_div(p, m);
+
+	int64_t tab[2*m];
+
+	int64_t aj = INT64_1;
+	for(int64_t j = INT64_0; j < m; j++)
+	{
+		tab[2*j+0] = aj;
+		tab[2*j+1] = j;
+		aj <<= 1;
+		if( aj >= p )
+			aj -= p;
+		if( INT64_1 == aj ) return j+INT64_1;
+	}
+
+	qsort(tab, m, 2*sizeof(int64_t), cmp_int64);
+
+	int64_t am = dlog2_r_lsb(p, m);
+
+	if( p > INT64_1 && am > INT64_MAX / (p-INT64_1) )
+	{
+		printf("WARNING: 'y *= am' could overflow!\n");
+		return dlog2_lsb(p);
+	}
+
+	// i*m < exponent_limit
+	int64_t i_limit = int64_ceil_div(exponent_limit, m);
+
+	int64_t y = am;
+	for(int64_t i = INT64_1; i < n && i <= i_limit; i++)
+	{
+		const int64_t *res = bsearch_(&y, tab, m, 2*sizeof(int64_t), cmp_int64);
+		if( res )
+		{
+			return i*m + *(res+1);
+		}
+
+		y *= am;
+		y %= p;
+	}
+
+	return 0;
+}
+
+static
 int64_t dlog2_bga(int64_t p)
 {
 	assert( p > INT64_0 && (p & INT64_1) );
@@ -288,6 +344,7 @@ int main(int argc, char *argv[])
 		//a = dlog2_msb(f);
 		//a = dlog2_bga(f);
 		a = dlog2_bga_qsort(f);
+		//a = dlog2_bga_qsort_limit(f, f-1);
 	(void)a;
 #endif
 #if 1
