@@ -398,13 +398,25 @@ int128_t mp_int128_ceil_div(int128_t a, int128_t b) { return int128_ceil_div(a, 
 static
 int int64_cmp(const void *p1, const void *p2)
 {
+#if 0
+	// BUG: overflows when casted to the int
 	return (int)( (*(const int64_t *)p2) - (*(const int64_t *)p1) );
+#else
+	int64_t x = (*(const int64_t *)p2) - (*(const int64_t *)p1);
+	return (x < 0) ? -1 : (x > 0);
+#endif
 }
 
 static
 int int128_cmp(const void *p1, const void *p2)
 {
+#if 0
+	// BUG: overflows when casted to the int
 	return (int)( (*(const int128_t *)p2) - (*(const int128_t *)p1) );
+#else
+	int128_t x = (*(const int128_t *)p2) - (*(const int128_t *)p1);
+	return (x < 0) ? -1 : (x > 0);
+#endif
 }
 
 static
