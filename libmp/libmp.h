@@ -1,6 +1,12 @@
 #ifndef LIBMP_H
 #define LIBMP_H
 
+#define ERR "ERROR: "
+#define WARN "WARNING: "
+#define DBG "DEBUG: "
+
+int message(const char *format, ...);
+
 /****************************************************************************/
 /** @defgroup int64_t int64_t
  * @{
