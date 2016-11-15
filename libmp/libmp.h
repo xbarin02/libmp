@@ -51,6 +51,8 @@ typedef unsigned __int128 uint128_t;
 #define INT128_2 INT128_C(2)
 #define INT128_L64(x) ((int64_t)(x))
 #define INT128_H64(x) ((int64_t)((x)>>64))
+#define INT128_MAX (int128_t) (((uint128_t) 1 << ((__SIZEOF_INT128__ * __CHAR_BIT__) - 1)) - 1)
+#define INT128_MIN (-INT128_MAX - 1)
 
 int128_t mp_int128_dpow2_mn(int128_t p, int128_t K);
 int128_t mp_int128_dpow2_pl(int128_t p, int128_t K);
@@ -60,6 +62,7 @@ int128_t mp_int128_dlog2_pl(int128_t p);
 
 int128_t mp_int128_dlog2_mn_lim(int128_t p, int128_t L);
 int128_t mp_int128_dlog2_pl_lim(int128_t p, int128_t L);
+int128_t mp_int128_dlog2_bg_lim(int128_t p, int128_t L);
 
 int128_t mp_int128_ceil_sqrt(int128_t n);
 int128_t mp_int128_ceil_div(int128_t a, int128_t b);

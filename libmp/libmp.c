@@ -565,6 +565,75 @@ int64_t int64_dlog2_bg_lim(int64_t p, int64_t L)
 
 int64_t mp_int64_dlog2_bg_lim(int64_t p, int64_t L) { return int64_dlog2_bg_lim(p, L); }
 
+// x in [0; L) : 2^x = 1 (mod p)
+static
+int128_t int128_dlog2_bg_lim(int128_t p, int128_t L)
+{
+	assert( p > INT128_0 );
+	assert( p & INT128_1 );
+
+	if( INT128_1 == p )
+		return INT128_0;
+
+	int128_t m = int128_ceil_div(int128_ceil_sqrt(p), INT128_C(3));
+
+	size_t cache_size = 1<<20;
+	if( 2*m*sizeof(int128_t) > cache_size )
+		m = cache_size/2/sizeof(int128_t);
+	int128_t n = int128_ceil_div(p, m);
+
+	int128_t am = int128_dpow2_mn(p, m);
+
+	if( p > INT128_1 && am > INT128_MAX / (p - INT128_1) )
+	{
+		message(WARN "'y *= am' could overflow 128 bits! Falling to naive algorithm...\n");
+		return int128_dlog2_mn_lim(p, L);
+	}
+
+	int128_t tab[2*m];
+
+	int128_t aj = INT128_1;
+	for(int128_t j = INT128_0; j < m; j++)
+	{
+		tab[2*j+0] = aj;
+		tab[2*j+1] = j;
+
+		aj <<= 1;
+		if( aj >= p )
+			aj -= p;
+
+		if( INT128_1 == aj )
+			return j + INT128_1;
+	}
+
+	qsort(tab, m, 2*sizeof(int128_t), int128_cmp);
+
+	// i*m < L
+	int128_t i_lim = int128_ceil_div(L, m);
+
+	int128_t y = am;
+	for(int128_t i = INT128_1; i < n && i <= i_lim; i++)
+	{
+		const int128_t *res = bsearch_(&y, tab, m, 2*sizeof(int128_t), int128_cmp);
+		if( res )
+		{
+			int128_t x = i*m + *(res+1);
+
+			if( x < L )
+				return x;
+			else
+				return 0;
+		}
+
+		y *= am;
+		y %= p;
+	}
+
+	return 0;
+}
+
+int128_t mp_int128_dlog2_bg_lim(int128_t p, int128_t L) { return int128_dlog2_bg_lim(p, L); }
+
 int message(const char *format, ...)
 {
 	va_list ap;
