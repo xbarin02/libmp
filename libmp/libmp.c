@@ -704,3 +704,27 @@ int message(const char *format, ...)
 
 	return n;
 }
+
+static
+void set_bit(char *ptr, int i)
+{
+	ptr[i/8] |= 1 << i%8;
+}
+
+static
+int get_bit(const char *ptr, int i)
+{
+	return ptr[i/8] & 1 << i%8;
+}
+
+// 0 : composite
+// > 0 : prime
+static
+int int_is_prime_cached(int p, const char *primes)
+{
+	assert( p >= 0 );
+
+	return !get_bit(primes, p);
+}
+
+int mp_int_is_prime_cached(int p, const char *primes) { return int_is_prime_cached(p, primes); }
