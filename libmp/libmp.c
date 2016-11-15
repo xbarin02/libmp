@@ -398,13 +398,13 @@ int128_t mp_int128_ceil_div(int128_t a, int128_t b) { return int128_ceil_div(a, 
 static
 int int64_cmp(const void *p1, const void *p2)
 {
-	return (*(const int64_t *)p2) - (*(const int64_t *)p1);
+	return (int)( (*(const int64_t *)p2) - (*(const int64_t *)p1) );
 }
 
 static
 int int128_cmp(const void *p1, const void *p2)
 {
-	return (*(const int128_t *)p2) - (*(const int128_t *)p1);
+	return (int)( (*(const int128_t *)p2) - (*(const int128_t *)p1) );
 }
 
 static
@@ -449,8 +449,8 @@ int64_t int64_dlog2_bg_lim_mul128(int64_t p, int64_t L)
 	int64_t m = int64_ceil_div(int64_ceil_sqrt(p), INT64_C(3));
 
 	size_t cache_size = 1<<20;
-	if( 2*m*sizeof(int64_t) > cache_size )
-		m = cache_size/2/sizeof(int64_t);
+	if( 2*(size_t)m*sizeof(int64_t) > cache_size )
+		m = (int64_t)( cache_size/2/sizeof(int64_t) );
 	int64_t n = int64_ceil_div(p, m);
 
 	int64_t tab[2*m];
@@ -469,7 +469,7 @@ int64_t int64_dlog2_bg_lim_mul128(int64_t p, int64_t L)
 			return j + INT64_1;
 	}
 
-	qsort(tab, m, 2*sizeof(int64_t), int64_cmp);
+	qsort(tab, (size_t)m, 2*sizeof(int64_t), int64_cmp);
 
 	int64_t am = int64_dpow2_mn(p, m);
 
@@ -479,7 +479,7 @@ int64_t int64_dlog2_bg_lim_mul128(int64_t p, int64_t L)
 	int64_t y = am;
 	for(int64_t i = INT64_1; i < n && i <= i_lim; i++)
 	{
-		const int64_t *res = bsearch_(&y, tab, m, 2*sizeof(int64_t), int64_cmp);
+		const int64_t *res = bsearch_(&y, tab, (size_t)m, 2*sizeof(int64_t), int64_cmp);
 		if( res )
 		{
 			int64_t x = i*m + *(res+1);
@@ -509,8 +509,8 @@ int64_t int64_dlog2_bg_lim(int64_t p, int64_t L)
 	int64_t m = int64_ceil_div(int64_ceil_sqrt(p), INT64_C(3));
 
 	size_t cache_size = 1<<20;
-	if( 2*m*sizeof(int64_t) > cache_size )
-		m = cache_size/2/sizeof(int64_t);
+	if( 2*(size_t)m*sizeof(int64_t) > cache_size )
+		m = (int64_t)( cache_size/2/sizeof(int64_t) );
 	int64_t n = int64_ceil_div(p, m);
 
 	int64_t am = int64_dpow2_mn(p, m);
@@ -537,7 +537,7 @@ int64_t int64_dlog2_bg_lim(int64_t p, int64_t L)
 			return j + INT64_1;
 	}
 
-	qsort(tab, m, 2*sizeof(int64_t), int64_cmp);
+	qsort(tab, (size_t)m, 2*sizeof(int64_t), int64_cmp);
 
 	// i*m < L
 	int64_t i_lim = int64_ceil_div(L, m);
@@ -545,7 +545,7 @@ int64_t int64_dlog2_bg_lim(int64_t p, int64_t L)
 	int64_t y = am;
 	for(int64_t i = INT64_1; i < n && i <= i_lim; i++)
 	{
-		const int64_t *res = bsearch_(&y, tab, m, 2*sizeof(int64_t), int64_cmp);
+		const int64_t *res = bsearch_(&y, tab, (size_t)m, 2*sizeof(int64_t), int64_cmp);
 		if( res )
 		{
 			int64_t x = i*m + *(res+1);
@@ -606,7 +606,7 @@ int128_t int128_dlog2_bg_lim(int128_t p, int128_t L)
 			return j + INT128_1;
 	}
 
-	qsort(tab, m, 2*sizeof(int128_t), int128_cmp);
+	qsort(tab, (size_t)m, 2*sizeof(int128_t), int128_cmp);
 
 	// i*m < L
 	int128_t i_lim = int128_ceil_div(L, m);
@@ -614,7 +614,7 @@ int128_t int128_dlog2_bg_lim(int128_t p, int128_t L)
 	int128_t y = am;
 	for(int128_t i = INT128_1; i < n && i <= i_lim; i++)
 	{
-		const int128_t *res = bsearch_(&y, tab, m, 2*sizeof(int128_t), int128_cmp);
+		const int128_t *res = bsearch_(&y, tab, (size_t)m, 2*sizeof(int128_t), int128_cmp);
 		if( res )
 		{
 			int128_t x = i*m + *(res+1);
@@ -706,13 +706,13 @@ int message(const char *format, ...)
 }
 
 static
-void set_bit(char *ptr, int i)
+void set_bit(uint8_t *ptr, int i)
 {
-	ptr[i/8] |= 1 << i%8;
+	ptr[i/8] |= (uint8_t)( 1 << i%8 );
 }
 
 static
-int get_bit(const char *ptr, int i)
+int get_bit(const uint8_t *ptr, int i)
 {
 	return ptr[i/8] & 1 << i%8;
 }
@@ -720,11 +720,45 @@ int get_bit(const char *ptr, int i)
 // 0 : composite
 // > 0 : prime
 static
-int int_is_prime_cached(int p, const char *primes)
+int int_is_prime_cached(int p, const uint8_t *primes)
 {
 	assert( p >= 0 );
 
 	return !get_bit(primes, p);
 }
 
-int mp_int_is_prime_cached(int p, const char *primes) { return int_is_prime_cached(p, primes); }
+int mp_int_is_prime_cached(int p, const uint8_t *primes) { return int_is_prime_cached(p, primes); }
+
+static
+void int64_test_prtest(uint8_t *record, int64_t factor, int exponent_limit, const uint8_t *primes)
+{
+	// skip M itself
+	if( INT64_0 == (factor & (factor+INT64_1)) )
+	{
+		return;
+	}
+
+	// check if the factor \equiv \pm 1 in \pmod 8
+	if( (INT64_C(1) != (factor&INT64_C(7))) && (INT64_C(7) != (factor&INT64_C(7))) )
+	{
+		return;
+	}
+
+	// not a prime factor, skip them
+	if( !int64_is_prime(factor) )
+	{
+		return;
+	}
+
+	// find M(n)
+	int n = (int)mp_int64_dlog2_bg_lim(factor, exponent_limit);
+
+	// check if the exponent is prime
+	if( int_is_prime_cached(n, primes) )
+	{
+		// mark the M(n) as dirty
+		set_bit(record, n);
+	}
+}
+
+void mp_int64_test_prtest(uint8_t *record, int64_t factor, int exponent_limit, const uint8_t *primes) { int64_test_prtest(record, factor, exponent_limit, primes); }

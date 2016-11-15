@@ -14,7 +14,7 @@ int message(const char *format, ...);
  * @{
  */
 
-int mp_int_is_prime_cached(int p, const char *primes);
+int mp_int_is_prime_cached(int p, const uint8_t *primes);
 
 /** @} */
 /****************************************************************************/
@@ -42,6 +42,8 @@ int64_t mp_int64_ceil_sqrt(int64_t n);
 int64_t mp_int64_ceil_div(int64_t a, int64_t b);
 
 int mp_int64_is_prime(int64_t p);
+
+void mp_int64_test_prtest(uint8_t *record, int64_t factor, int exponent_limit, const uint8_t *primes);
 
 /** @} */
 /****************************************************************************/
