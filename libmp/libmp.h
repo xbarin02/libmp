@@ -26,6 +26,7 @@ int64_t mp_int64_dlog2_pl(int64_t p);
 
 int64_t mp_int64_dlog2_mn_lim(int64_t p, int64_t L);
 int64_t mp_int64_dlog2_pl_lim(int64_t p, int64_t L);
+int64_t mp_int64_dlog2_bg_lim(int64_t p, int64_t L);
 
 int64_t mp_int64_ceil_sqrt(int64_t n);
 int64_t mp_int64_ceil_div(int64_t a, int64_t b);
