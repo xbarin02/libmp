@@ -365,7 +365,8 @@ void *bsearch_(const void *key, const void *base, size_t num, size_t size,
 static
 int cmp_int64(const void *p1, const void *p2)
 {
-	return (*(const int64_t *)p2) - (*(const int64_t *)p1);
+	int64_t x = (*(const int64_t *)p2) - (*(const int64_t *)p1);
+	return (x < 0) ? -1 : (x > 0);
 }
 
 static
