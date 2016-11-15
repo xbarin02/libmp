@@ -1,3 +1,6 @@
+/** @file libmp.h
+ * Mersenne prime library
+ */
 #ifndef LIBMP_H
 #define LIBMP_H
 
@@ -44,6 +47,7 @@ int64_t mp_int64_ceil_div(int64_t a, int64_t b);
 int mp_int64_is_prime(int64_t p);
 
 void mp_int64_test_prtest(uint8_t *record, int64_t factor, int exponent_limit, const uint8_t *primes);
+void mp_int64_test_direct(uint8_t *record, int64_t factor, int exponent_limit, const uint8_t *primes);
 
 /** @} */
 /****************************************************************************/

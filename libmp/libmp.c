@@ -762,3 +762,31 @@ void int64_test_prtest(uint8_t *record, int64_t factor, int exponent_limit, cons
 }
 
 void mp_int64_test_prtest(uint8_t *record, int64_t factor, int exponent_limit, const uint8_t *primes) { int64_test_prtest(record, factor, exponent_limit, primes); }
+
+static
+void int64_test_direct(uint8_t *record, int64_t factor, int exponent_limit, const uint8_t *primes)
+{
+	// skip M itself
+	if( INT64_0 == (factor & (factor+INT64_1)) )
+	{
+		return;
+	}
+
+	// check if the factor \equiv \pm 1 in \pmod 8
+	if( (INT64_C(1) != (factor&INT64_C(7))) && (INT64_C(7) != (factor&INT64_C(7))) )
+	{
+		return;
+	}
+
+	// find M(n)
+	int n = (int)mp_int64_dlog2_bg_lim(factor, exponent_limit);
+
+	// check if the exponent is prime
+	if( int_is_prime_cached(n, primes) )
+	{
+		// mark the M(n) as dirty
+		set_bit(record, n);
+	}
+}
+
+void mp_int64_test_direct(uint8_t *record, int64_t factor, int exponent_limit, const uint8_t *primes) { int64_test_direct(record, factor, exponent_limit, primes); }
