@@ -586,7 +586,7 @@ int128_t int128_dlog2_bg_lim(int128_t p, int128_t L)
 
 	if( p > INT128_1 && am > INT128_MAX / (p - INT128_1) )
 	{
-		message(WARN "'y *= am' could overflow 128 bits! Falling to naive algorithm...\n");
+		message(WARN "'y *= am' could overflow 128 bits! Falling to a naive algorithm...\n");
 		return int128_dlog2_mn_lim(p, L);
 	}
 
@@ -633,6 +633,56 @@ int128_t int128_dlog2_bg_lim(int128_t p, int128_t L)
 }
 
 int128_t mp_int128_dlog2_bg_lim(int128_t p, int128_t L) { return int128_dlog2_bg_lim(p, L); }
+
+// 0 : composite
+// > 0 : prime
+int int64_is_prime(int64_t p)
+{
+	assert( p >= INT64_0 );
+
+	if( p < INT64_C(2) )
+		return 0;
+
+	if( p == INT64_C(2) )
+		return 1;
+
+	const int64_t sqrt_p = int64_ceil_sqrt(p);
+
+	for(int64_t factor = INT64_C(2); factor <= sqrt_p; factor++)
+	{
+		if( p % factor == INT64_0 )
+			return 0;
+	}
+
+	return 1;
+}
+
+int mp_int64_is_prime(int64_t p) { return int64_is_prime(p); }
+
+// 0 : composite
+// > 0 : prime
+int int128_is_prime(int128_t p)
+{
+	assert( p >= INT128_0 );
+
+	if( p < INT128_C(2) )
+		return 0;
+
+	if( p == INT128_C(2) )
+		return 1;
+
+	const int128_t sqrt_p = int128_ceil_sqrt(p);
+
+	for(int128_t factor = INT128_C(2); factor <= sqrt_p; factor++)
+	{
+		if( p % factor == INT128_0 )
+			return 0;
+	}
+
+	return 1;
+}
+
+int mp_int128_is_prime(int128_t p) { return int128_is_prime(p); }
 
 int message(const char *format, ...)
 {

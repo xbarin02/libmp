@@ -1,6 +1,8 @@
 #ifndef LIBMP_H
 #define LIBMP_H
 
+#include <stdint.h>
+
 #define ERR "ERROR: "
 #define WARN "WARNING: "
 #define DBG "DEBUG: "
@@ -11,8 +13,6 @@ int message(const char *format, ...);
 /** @defgroup int64_t int64_t
  * @{
  */
-
-#include <stdint.h>
 
 #define INT64_0 INT64_C(0)
 #define INT64_1 INT64_C(1)
@@ -30,6 +30,8 @@ int64_t mp_int64_dlog2_bg_lim(int64_t p, int64_t L);
 
 int64_t mp_int64_ceil_sqrt(int64_t n);
 int64_t mp_int64_ceil_div(int64_t a, int64_t b);
+
+int mp_int64_is_prime(int64_t p);
 
 /** @} */
 /****************************************************************************/
@@ -66,6 +68,8 @@ int128_t mp_int128_dlog2_bg_lim(int128_t p, int128_t L);
 
 int128_t mp_int128_ceil_sqrt(int128_t n);
 int128_t mp_int128_ceil_div(int128_t a, int128_t b);
+
+int mp_int128_is_prime(int128_t p);
 
 /** @} */
 /****************************************************************************/
