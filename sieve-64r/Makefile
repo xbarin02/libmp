@@ -2,6 +2,8 @@ CFLAGS=-std=c99 -pedantic -Wall -Wextra -march=native -O3 -D_POSIX_C_SOURCE=1993
 LDLIBS=-lrt -L../libmp -lmp
 BIN=sieve-64r
 
+-include ../Makefile.local
+
 # CFLAGS += -g
 # LDFLAGS += -g -rdynamic
 

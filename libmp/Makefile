@@ -4,6 +4,8 @@ LIBNAME=mp
 OBJ=libmp.o
 BIN=lib$(LIBNAME).a
 
+-include ../Makefile.local
+
 # CFLAGS += -g
 # LDFLAGS += -g -rdynamic
 
