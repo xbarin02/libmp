@@ -403,10 +403,13 @@ int int64_cmp(const void *p1, const void *p2)
 	// BUG: overflows when casted to the int
 	return (int)( (*(const int64_t *)p2) - (*(const int64_t *)p1) );
 #endif
-#if 1
-	// FIXME: overflows when the difference not fit into int64_t
+#if 0
+	// BUG: overflows when the difference not fit into int64_t
 	int64_t x = (*(const int64_t *)p2) - (*(const int64_t *)p1);
 	return (x < 0) ? -1 : (x > 0);
+#endif
+#if 1
+	return (*(const int64_t *)p2 < *(const int64_t *)p1) ? -1 : (*(const int64_t *)p2 > *(const int64_t *)p1);
 #endif
 }
 
@@ -417,10 +420,13 @@ int int128_cmp(const void *p1, const void *p2)
 	// BUG: overflows when casted to the int
 	return (int)( (*(const int128_t *)p2) - (*(const int128_t *)p1) );
 #endif
-#if 1
-	// FIXME: overflows when the difference not fit into int64_t
+#if 0
+	// BUG: overflows when the difference not fit into int64_t
 	int128_t x = (*(const int128_t *)p2) - (*(const int128_t *)p1);
 	return (x < 0) ? -1 : (x > 0);
+#endif
+#if 1
+	return (*(const int128_t *)p2 < *(const int128_t *)p1) ? -1 : (*(const int128_t *)p2 > *(const int128_t *)p1);
 #endif
 }
 
