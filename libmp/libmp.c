@@ -8,6 +8,7 @@
 #include <stdarg.h>
 #include <string.h>
 #include <stdio.h>
+#include <inttypes.h>
 
 // 2^(+k) (mod p) [MSB, slower]
 static
@@ -529,7 +530,12 @@ int64_t int64_dlog2_bg_lim(int64_t p, int64_t L)
 
 	if( p > INT64_1 && am > INT64_MAX / (p - INT64_1) )
 	{
-		message(WARN "'y *= am' could overflow 64 bits! Falling to 128-bit multiplication...\n");
+		static int warned = 0;
+		if( !warned )
+		{
+			message(WARN "'y *= am' could overflow 64 bits! Falling to 128-bit multiplication... (this message will appear only once)\n");
+			warned = 1;
+		}
 		return (int64_t)int64_dlog2_bg_lim_mul128(p, L);
 	}
 
@@ -652,15 +658,21 @@ int int64_is_prime(int64_t p)
 {
 	assert( p >= INT64_0 );
 
-	if( p < INT64_C(2) )
+	if( p < INT64_2 )
 		return 0;
 
-	if( p == INT64_C(2) )
+	// 2 is prime
+	if( p == INT64_2 )
 		return 1;
+
+	// even numbers are composite
+	if( ~p & INT64_1 )
+		return 0;
 
 	const int64_t sqrt_p = int64_ceil_sqrt(p);
 
-	for(int64_t factor = INT64_C(2); factor <= sqrt_p; factor++)
+	// 3, 5, 7, 9, 11, ...
+	for(int64_t factor = INT64_C(3); factor <= sqrt_p; factor += INT64_2)
 	{
 		if( p % factor == INT64_0 )
 			return 0;
@@ -677,15 +689,21 @@ int int128_is_prime(int128_t p)
 {
 	assert( p >= INT128_0 );
 
-	if( p < INT128_C(2) )
+	if( p < INT128_2 )
 		return 0;
 
-	if( p == INT128_C(2) )
+	// 2 is prime
+	if( p == INT128_2 )
 		return 1;
+
+	// even numbers are composite
+	if( ~p & INT128_1 )
+		return 0;
 
 	const int128_t sqrt_p = int128_ceil_sqrt(p);
 
-	for(int128_t factor = INT128_C(2); factor <= sqrt_p; factor++)
+	// 3, 5, 7, 9, 11, ...
+	for(int128_t factor = INT128_C(3); factor <= sqrt_p; factor += INT128_2)
 	{
 		if( p % factor == INT128_0 )
 			return 0;
@@ -770,6 +788,8 @@ void int64_test_prtest(uint8_t *record, int64_t factor, int exponent_limit, cons
 	{
 		// mark the M(n) as dirty
 		set_bit(record, n);
+
+		message(DBG "M(%i) was eliminated by %" PRId64 "!\n", n, factor);
 	}
 }
 
@@ -798,6 +818,8 @@ void int64_test_direct(uint8_t *record, int64_t factor, int exponent_limit, cons
 	{
 		// mark the M(n) as dirty
 		set_bit(record, n);
+
+		message(DBG "M(%i) was eliminated by %" PRId64 "!\n", n, factor);
 	}
 }
 
