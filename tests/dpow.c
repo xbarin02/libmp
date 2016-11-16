@@ -48,7 +48,6 @@ int64_t dpow2_mn(int64_t p, int64_t K)
 
 int main()
 {
-	
 	// for each range
 	for(int bit_level = 0; bit_level < 64; bit_level++)
 	{

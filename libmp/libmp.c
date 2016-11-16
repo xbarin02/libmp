@@ -348,6 +348,7 @@ int128_t int128_dlog2_pl_lim(int128_t p, int128_t L)
 
 int128_t mp_int128_dlog2_pl_lim(int128_t p, int128_t L) { return int128_dlog2_pl_lim(p, L); }
 
+static
 int64_t int64_ceil_sqrt(int64_t n)
 {
 	assert( n > INT64_0 );
@@ -366,6 +367,7 @@ int64_t int64_ceil_sqrt(int64_t n)
 
 int64_t mp_int64_ceil_sqrt(int64_t n) { return int64_ceil_sqrt(n); }
 
+static
 int128_t int128_ceil_sqrt(int128_t n)
 {
 	assert( n > INT128_0 );
