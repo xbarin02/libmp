@@ -10,31 +10,7 @@
 #include <stdarg.h>
 #include <time.h>
 #include <string.h>
-
-#define ERR "ERROR: "
-#define WARN "WARNING: "
-#define DBG "DEBUG: "
-
-int message(const char *format, ...)
-{
-	va_list ap;
-
-	time_t now = time(NULL);
-	char buf[26];
-	ctime_r(&now, buf);
-
-	buf[strlen(buf)-1] = 0;
-
-	int n = printf("[%s] ", buf);
-
-	va_start(ap, format);
-	n += vprintf(format, ap);
-	va_end(ap);
-
-	fflush(stdout);
-
-	return n;
-}
+#include <libmp.h>
 
 int g_term = 0;
 int g_info = 0;
@@ -79,10 +55,6 @@ void sighandler_usr2(int signum)
 	signal(SIGUSR2, sighandler_usr2);
 }
 
-#define INT64_0 INT64_C(0)
-#define INT64_1 INT64_C(1)
-#define INT64_2 INT64_C(2)
-
 int ceil_sqrt(int n)
 {
 	assert( n > 0 );
@@ -94,22 +66,6 @@ int ceil_sqrt(int n)
 	{
 		y = x;
 		x = (x + (n + x - 1)/x + 1) >> 1;
-	}
-
-	return x;
-}
-
-int64_t int64_ceil_sqrt(int64_t n)
-{
-	assert( n > INT64_0 );
-
-	int64_t x = n;
-	int64_t y = INT64_0;
-
-	while(x != y)
-	{
-		y = x;
-		x = (x + (n + x - INT64_1)/x + INT64_1) >> 1;
 	}
 
 	return x;
@@ -248,156 +204,6 @@ char *gen_prime_table(int exponent_limit)
 	message("The prime table was created.\n");
 
 	return primes;
-}
-
-static
-int int64_is_prime(int64_t p)
-{
-	assert( p >= INT64_0 );
-
-	if( p < INT64_2 )
-		return 0;
-
-	// 2 is prime
-	if( p == INT64_2 )
-		return 1;
-
-	// even numbers are composite
-	if( !(p&1) )
-		return 0;
-
-	const int64_t sqrt_p = int64_ceil_sqrt(p);
-
-	// 3, 5, 7, 9, 11, ...
-	for(int64_t factor = INT64_C(3); factor <= sqrt_p; factor += INT64_2)
-	{
-		if( p % factor == INT64_0 )
-			// composite
-			return 0;
-	}
-
-	return 1;
-}
-
-static
-int int64_is_prime_fast(int64_t p)
-{
-	assert( p >= INT64_0 );
-
-	if( p < INT64_2 )
-		return 0;
-
-	// 2 is prime
-	if( p == INT64_2 )
-		return 1;
-
-	// even numbers are composite
-	if( !(p&1) )
-		return 0;
-
-	const int64_t sqrt_p = int64_ceil_sqrt(p);
-
-	// trial division up to sqrt(p) takes too long, so use sqrt(sqrt(p))
-	const int64_t sqrt4_p = int64_ceil_sqrt(sqrt_p);
-
-	// 3, 5, 7, 9, 11, ...
-	for(int64_t factor = INT64_C(3); factor <= sqrt4_p; factor += INT64_2)
-	{
-		if( p % factor == INT64_0 )
-			// composite
-			return 0;
-	}
-
-	// may be prime
-	return 1;
-}
-
-static
-int64_t int64_min(int64_t a, int64_t b)
-{
-	return a < b ? a : b;
-}
-
-static
-int dlog2(int64_t p, int exponent_limit)
-{
-	assert( p > INT64_0 );
-
-	int k1 = (int)int64_min(p, (int64_t)exponent_limit) - 1;
-
-	// b^k
-	int64_t m = INT64_1;
-
-	int k = 0;
-
-#if 0
-	while( k < k1 )
-	{
-		// b^k = b^k * b = b^(k+1)
-		m <<= 1;
-		m %= p;
-
-		// k = k + 1
-		k++;
-
-		// b^k == g
-		if( INT64_1 == m )
-			return k;
-		// m=0 never become 1 (although, probably not valid for p : PRIME)
-		if( INT64_0 == m )
-			return 0;
-	}
-#else
-	while( k < k1 )
-	{
-		if( m & 1 )
-			m += p;
-		m >>= 1;
-
-		k++;
-
-		if( INT64_1 == m )
-			return k;
-	}
-#endif
-
-	// fallback
-	return 0;
-}
-
-void test(char *record, int64_t factor, int exponent_limit, const char *primes)
-{
-	assert( factor > INT64_0 );
-
-	if( INT64_0 == (factor & (factor+INT64_1)) )
-	{
-		// skip M itself
-		return;
-	}
-
-	// check if the factor \equiv \pm 1 in \pmod 8
-	if( (INT64_C(1) != (factor&INT64_C(7))) && (INT64_C(7) != (factor&INT64_C(7))) )
-		return;
-
-#if 0
-	if( !int64_is_prime_fast(factor) )
-	{
-		// not a prime factor, skip them
-		return;
-	}
-#endif
-
-	// find M(n)
-	int n = dlog2(factor, exponent_limit);
-
-	// check if the exponent is prime
-	if( is_prime(n, primes) )
-	{
-		// mark the M(n) as dirty
-		set_bit(record, n);
-
-		message("M(%i) was eliminated by %" PRId64 "!\n", n, factor);
-	}
 }
 
 void summary(const char *record, int exponent_limit, const char *primes)
@@ -570,24 +376,6 @@ int random_difficulty(FILE *random_file)
 }
 
 static
-int64_t int64_random_prime(int n, FILE *random_file)
-{
-	if(0 == n) return 1;
-
-	int64_t primorial = int64_primorial(n);
-	int64_t modulus = int64_prime(n+1);
-
-	int64_t q;
-	do { q = int64_random(random_file); } while( q < INT64_0 );
-	q %= modulus;
-
-	int64_t s;
-	do { s = int64_random_prime(n-1, random_file); } while( INT64_1 != s && s < modulus );
-
-	return q * primorial + s;
-}
-
-static
 int64_t int64_random_prime_fast(int n, FILE *random_file)
 {
 	uint64_t r = int64_random(random_file);
@@ -624,15 +412,9 @@ void sieve(char *record, int exponent_limit, const char *record_path, const char
 		// random difficulty level
 		int n = random_difficulty(random_file);
 
-#if 0
-		int64_t factor = int64_random_prime(n, random_file);
-#else
 		int64_t factor = int64_random_prime_fast(n, random_file);
-#endif
 
-		message(DBG "Testing random prime factor [difficulty %i] %" PRIu64 "...\n", n, factor);
-
-		test(record, factor, exponent_limit, primes);
+		mp_int64_test_direct((uint8_t *)record, factor, exponent_limit, (const uint8_t *)primes);
 
 		if( g_term )
 		{
