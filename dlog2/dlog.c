@@ -4,10 +4,7 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <limits.h>
-
-#define INT64_0 INT64_C(0)
-#define INT64_1 INT64_C(1)
-#define INT64_2 INT64_C(2)
+#include <libmp.h>
 
 static
 int64_t dlog2_msb(int64_t p)
@@ -142,7 +139,8 @@ void *bsearch_(const void *key, const void *base, size_t num, size_t size,
 static
 int cmp_int64(const void *p1, const void *p2)
 {
-	return (*(const int64_t *)p2) - (*(const int64_t *)p1);
+	int64_t x = (*(const int64_t *)p2) - (*(const int64_t *)p1);
+	return (x < 0) ? -1 : (x > 0);
 }
 
 // http://stackoverflow.com/questions/2745074/fast-ceiling-of-an-integer-division-in-c-c
@@ -151,15 +149,6 @@ int64_t int64_ceil_div(int64_t a, int64_t b)
 {
 	return (a + b - INT64_1) / b;
 }
-
-// TODO
-// [x] qsort, bsearch
-//     * for p < 100000 is faster (when m = sqrt(p)/3)
-//     * for p < 1000000 is much faster
-//     * for p < 10000000 is much faster
-// [x] limit tab[m] to fit into cache size
-// [x] check for overflow ... https://gcc.gnu.org/onlinedocs/gcc/Integer-Overflow-Builtins.html
-// [x] is 1 found order among baby steps?
 
 // https://en.wikipedia.org/wiki/Baby-step_giant-step
 static
@@ -325,39 +314,16 @@ int64_t dlog2_bga(int64_t p)
 
 int main(int argc, char *argv[])
 {
-#if 0
-	for(int64_t f = 1; f < 100000; f += 2)
-	{
-		//if( dlog2_lsb(f) != dlog2_msb(f) )
-		//if( dlog2_lsb(f) != dlog2_bga(f) )
-		if( dlog2_lsb(f) != dlog2_bga_qsort(f) )
-		{
-			printf("failed for %" PRId64 ": %" PRId64 " %" PRId64 "\n", f, dlog2_lsb(f), dlog2_bga_qsort(f));
-			abort();
-		}
-	}
-#endif
-#if 0
-	volatile int64_t a;
-	for(int64_t f = 1; f < 1000000; f += 2)
-		//a = dlog2_lsb(f);
-		//a = dlog2_msb(f);
-		//a = dlog2_bga(f);
-		a = dlog2_bga_qsort(f);
-		//a = dlog2_bga_qsort_limit(f, f-1);
-	(void)a;
-#endif
-#if 1
 	switch(argc)
 	{
 		case 1:
-			printf("Usage:\n\t%s [f]\t.. returns dlog2(f)\n\t%s [f] [r]\t.. returns residue of r=dlog2(f)\n", *argv, *argv);
+			printf("Usage:\n\t%s [f]\t.. returns dlog2(1) (mod f)\n\t%s [f] [r]\t.. returns 2^r (mod f)\n", *argv, *argv);
 			break;
 		case 2:
 		{
 			int64_t f = atol(argv[1]);
-			printf("dlog2(%" PRId64 ") = %" PRId64 " (MSB)\n", f, dlog2_msb(f));
-			printf("dlog2(%" PRId64 ") = %" PRId64 " (LSB)\n", f, dlog2_lsb(f));
+			printf("dlog2(%" PRId64 ") = %" PRId64 " (MSB)\n", f, mp_int64_dlog2_pl(f));
+			printf("dlog2(%" PRId64 ") = %" PRId64 " (LSB)\n", f, mp_int64_dlog2_mn(f));
 			printf("dlog2(%" PRId64 ") = %" PRId64 " (BGA)\n", f, dlog2_bga_qsort(f));
 		}
 			break;
@@ -365,13 +331,13 @@ int main(int argc, char *argv[])
 		{
 			int64_t f = atol(argv[1]);
 			int64_t r = atol(argv[2]);
-			printf("(mod %" PRId64 ") 2^(+%" PRId64 ") = %" PRId64 " (MSB)\n", f, r, dlog2_r_msb(f, r));
-			printf("(mod %" PRId64 ") 2^(-%" PRId64 ") = %" PRId64 " (LSB)\n", f, r, dlog2_r_lsb(f, r));
+			printf("(mod %" PRId64 ") 2^(+%" PRId64 ") = %" PRId64 " (MSB)\n", f, r, mp_int64_dpow2_pl(f, r));
+			printf("(mod %" PRId64 ") 2^(-%" PRId64 ") = %" PRId64 " (LSB)\n", f, r, mp_int64_dpow2_mn(f, r));
 		}
 			break;
 		default:
 			return main(1, argv);
 	}
-#endif
+
 	return 0;
 }
