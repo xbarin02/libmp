@@ -8,39 +8,8 @@
 #include <strings.h>
 #include <time.h>
 #include <stdarg.h>
-#include <time.h>
 #include <string.h>
-
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-pedantic"
-typedef __int128 int128_t;
-typedef unsigned __int128 uint128_t;
-#pragma GCC diagnostic pop
-
-#define ERR "ERROR: "
-#define WARN "WARNING: "
-#define DBG "DEBUG: "
-
-int message(const char *format, ...)
-{
-	va_list ap;
-
-	time_t now = time(NULL);
-	char buf[26];
-	ctime_r(&now, buf);
-
-	buf[strlen(buf)-1] = 0;
-
-	int n = printf("[%s] ", buf);
-
-	va_start(ap, format);
-	n += vprintf(format, ap);
-	va_end(ap);
-
-	fflush(stdout);
-
-	return n;
-}
+#include <libmp.h>
 
 int g_term = 0;
 int g_info = 0;
@@ -260,35 +229,6 @@ char *gen_prime_table(int exponent_limit)
 }
 
 static
-int int128_is_prime(int128_t p)
-{
-	assert( p >= INT128_0 );
-
-	if( p < INT128_2 )
-		return 0;
-
-	// 2 is prime
-	if( p == INT128_2 )
-		return 1;
-
-	// even numbers are composite
-	if( !(p&1) )
-		return 0;
-
-	const int128_t sqrt_p = int128_ceil_sqrt(p);
-
-	// 3, 5, 7, 9, 11, ...
-	for(int128_t factor = INT128_C(3); factor <= sqrt_p; factor += INT128_2)
-	{
-		if( p % factor == INT128_0 )
-			// composite
-			return 0;
-	}
-
-	return 1;
-}
-
-static
 int int128_is_prime_fast(int128_t p)
 {
 	assert( p >= INT128_0 );
@@ -319,94 +259,6 @@ int int128_is_prime_fast(int128_t p)
 
 	// may be prime
 	return 1;
-}
-
-static
-int128_t int128_min(int128_t a, int128_t b)
-{
-	return a < b ? a : b;
-}
-
-static
-int dlog2(int128_t p, int exponent_limit)
-{
-	assert( p > INT128_0 );
-
-	int k1 = (int)int128_min(p, (int128_t)exponent_limit) - 1;
-
-	// b^k
-	int128_t m = INT128_1;
-
-	int k = 0;
-
-#if 0
-	while( k < k1 )
-	{
-		// b^k = b^k * b = b^(k+1)
-		m <<= 1;
-		m %= p;
-
-		// k = k + 1
-		k++;
-
-		// b^k == g
-		if( INT128_1 == m )
-			return k;
-		// m=0 never become 1 (although, probably not valid for p : PRIME)
-		if( INT128_0 == m )
-			return 0;
-	}
-#else
-	while( k < k1 )
-	{
-		if( m & 1 )
-			m += p;
-		m >>= 1;
-
-		k++;
-
-		if( INT128_1 == m )
-			return k;
-	}
-#endif
-
-	// fallback
-	return 0;
-}
-
-void test(char *record, int128_t factor, int exponent_limit, const char *primes)
-{
-	assert( factor > INT128_0 );
-
-	if( INT128_0 == (factor & (factor+INT128_1)) )
-	{
-		// skip M itself
-		return;
-	}
-
-	// check if the factor \equiv \pm 1 in \pmod 8
-	if( (INT128_C(1) != (factor&INT128_C(7))) && (INT128_C(7) != (factor&INT128_C(7))) )
-		return;
-
-#if 0
-	if( !int128_is_prime_fast(factor) )
-	{
-		// not a prime factor, skip them
-		return;
-	}
-#endif
-
-	// find M(n)
-	int n = dlog2(factor, exponent_limit);
-
-	// check if the exponent is prime
-	if( is_prime(n, primes) )
-	{
-		// mark the M(n) as dirty
-		set_bit(record, n);
-
-		message("M(%i) was eliminated by %" PRId64 ":%" PRId64 "!\n", n, INT128_H64(factor), INT128_L64(factor));
-	}
 }
 
 void summary(const char *record, int exponent_limit, const char *primes)
@@ -568,32 +420,14 @@ int random(FILE *random_file)
 static
 int random_difficulty(FILE *random_file)
 {
-	const int n0 = 8; // inclusive
-	const int n1 = 11; // exclusive
+	const int n0 = 11; // inclusive
+	const int n1 = 12; // exclusive
 
 	int n;
 	do { n = random(random_file); } while( n < 0 );
 	n = n0 + n%(n1-n0);
 
 	return n;
-}
-
-static
-int128_t int128_random_prime(int n, FILE *random_file)
-{
-	if(0 == n) return 1;
-
-	int128_t primorial = int128_primorial(n);
-	int128_t modulus = int128_prime(n+1);
-
-	int128_t q;
-	do { q = int128_random(random_file); } while( q < INT128_0 );
-	q %= modulus;
-
-	int128_t s;
-	do { s = int128_random_prime(n-1, random_file); } while( INT128_1 != s && s < modulus );
-
-	return q * primorial + s;
 }
 
 static
@@ -633,18 +467,14 @@ void sieve(char *record, int exponent_limit, const char *record_path, const char
 		// random difficulty level
 		int n = random_difficulty(random_file);
 
-#if 0
-		int128_t factor = int128_random_prime(n, random_file);
-#else
 		int128_t factor = int128_random_prime_fast(n, random_file);
-#endif
 
 		message(DBG "Testing random prime factor [difficulty %i] %" PRIu64 ":%" PRIu64 "...\n",
 			n,
 			INT128_H64(factor), INT128_L64(factor)
 		);
 
-		test(record, factor, exponent_limit, primes);
+		mp_int128_test_direct((uint8_t *)record, factor, exponent_limit, (const uint8_t *)primes);
 
 		if( g_term )
 		{

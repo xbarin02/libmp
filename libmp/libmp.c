@@ -994,6 +994,42 @@ void int64_test_prtest(uint8_t *record, int64_t factor, int exponent_limit, cons
 void mp_int64_test_prtest(uint8_t *record, int64_t factor, int exponent_limit, const uint8_t *primes) { int64_test_prtest(record, factor, exponent_limit, primes); }
 
 static
+void int128_test_prtest(uint8_t *record, int128_t factor, int exponent_limit, const uint8_t *primes)
+{
+	// skip M itself
+	if( INT128_0 == (factor & (factor+INT128_1)) )
+	{
+		return;
+	}
+
+	// check if the factor \equiv \pm 1 in \pmod 8
+	if( (INT128_C(1) != (factor&INT128_C(7))) && (INT128_C(7) != (factor&INT128_C(7))) )
+	{
+		return;
+	}
+
+	// not a prime factor, skip them
+	if( !int128_is_prime(factor) )
+	{
+		return;
+	}
+
+	// find M(n)
+	int n = (int)mp_int128_dlog2_bg_lim(factor, exponent_limit);
+
+	// check if the exponent is prime
+	if( int_is_prime_cached(n, primes) )
+	{
+		// mark the M(n) as dirty
+		set_bit(record, n);
+
+		message(DBG "M(%i) was eliminated by %" PRIu64 ":%" PRIu64 "!\n", n, INT128_H64(factor), INT128_L64(factor));
+	}
+}
+
+void mp_int128_test_prtest(uint8_t *record, int128_t factor, int exponent_limit, const uint8_t *primes) { int128_test_prtest(record, factor, exponent_limit, primes); }
+
+static
 void int64_test_direct(uint8_t *record, int64_t factor, int exponent_limit, const uint8_t *primes)
 {
 	// skip M itself
@@ -1022,3 +1058,33 @@ void int64_test_direct(uint8_t *record, int64_t factor, int exponent_limit, cons
 }
 
 void mp_int64_test_direct(uint8_t *record, int64_t factor, int exponent_limit, const uint8_t *primes) { int64_test_direct(record, factor, exponent_limit, primes); }
+
+static
+void int128_test_direct(uint8_t *record, int128_t factor, int exponent_limit, const uint8_t *primes)
+{
+	// skip M itself
+	if( INT128_0 == (factor & (factor+INT128_1)) )
+	{
+		return;
+	}
+
+	// check if the factor \equiv \pm 1 in \pmod 8
+	if( (INT128_C(1) != (factor&INT128_C(7))) && (INT128_C(7) != (factor&INT128_C(7))) )
+	{
+		return;
+	}
+
+	// find M(n)
+	int n = (int)mp_int128_dlog2_bg_lim(factor, exponent_limit);
+
+	// check if the exponent is prime
+	if( int_is_prime_cached(n, primes) )
+	{
+		// mark the M(n) as dirty
+		set_bit(record, n);
+
+		message(DBG "M(%i) was eliminated by %" PRIu64 ":%" PRIu64 "!\n", n, INT128_H64(factor), INT128_L64(factor));
+	}
+}
+
+void mp_int128_test_direct(uint8_t *record, int128_t factor, int exponent_limit, const uint8_t *primes) { int128_test_direct(record, factor, exponent_limit, primes); }
