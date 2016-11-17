@@ -53,7 +53,7 @@ int main()
 	{
 		printf("testing the bit level %i...\n", bit_level);
 
-		// for each ODD factor in [ 2^bit_level .. 2^(bit_level+1)-1 )
+		// for each ODD factor in [ 2^bit_level .. 2^(bit_level+1) )
 		for(int64_t f = (INT64_1<<bit_level) + 1; f < (INT64_1<<(bit_level+1)); f += 2)
 		{
 			// for each power

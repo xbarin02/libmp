@@ -51,7 +51,7 @@ int main()
 	{
 		printf("testing the bit level %i...\n", bit_level);
 
-		// for each factor in [ 2^bit_level .. 2^(bit_level+1)-1 )
+		// for each factor in [ 2^bit_level .. 2^(bit_level+1) )
 		for(int64_t f = (INT64_1<<bit_level); f < (INT64_1<<(bit_level+1)); f++)
 		{
 			const int r = is_prime(f);
