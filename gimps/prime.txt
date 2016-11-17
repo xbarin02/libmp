@@ -1,0 +1,17 @@
+FixedHardwareUID=1
+V24OptionsConverted=1
+WGUID_version=2
+StressTester=0
+UsePrimenet=1
+DialUp=0
+V5UserID=dabler
+WorkPreference=0
+Priority=1
+DaysOfWork=3
+RunOnBattery=1
+WindowsGUID=
+HardwareGUID=86580f2516d1fd9980d99d9472cfecc8
+
+[PrimeNet]
+Debug=0
+ProxyHost=
