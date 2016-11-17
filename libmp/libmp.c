@@ -852,6 +852,7 @@ int128_t mp_int128_dlog2_bg(int128_t p) { return int128_dlog2_bg(p); }
 
 // 0 : composite
 // > 0 : prime
+static
 int int64_is_prime(int64_t p)
 {
 	assert( p >= INT64_0 );
@@ -883,6 +884,7 @@ int mp_int64_is_prime(int64_t p) { return int64_is_prime(p); }
 
 // 0 : composite
 // > 0 : prime
+static
 int int128_is_prime(int128_t p)
 {
 	assert( p >= INT128_0 );

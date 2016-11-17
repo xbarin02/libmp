@@ -9,30 +9,7 @@
 #include <time.h>
 #include <stdarg.h>
 #include <string.h>
-
-#define ERR "ERROR: "
-#define WARN "WARNING: "
-
-int message(const char *format, ...)
-{
-	va_list ap;
-
-	time_t now = time(NULL);
-	char buf[26];
-	ctime_r(&now, buf);
-
-	buf[strlen(buf)-1] = 0;
-
-	int n = printf("[%s] ", buf);
-
-	va_start(ap, format);
-	n += vprintf(format, ap);
-	va_end(ap);
-
-	fflush(stdout);
-
-	return n;
-}
+#include <libmp.h>
 
 int g_term = 0;
 int g_info = 0;
@@ -271,165 +248,6 @@ int int64_is_prime(int64_t p)
 	return 1;
 }
 
-static
-int64_t int64_min(int64_t a, int64_t b)
-{
-	return a < b ? a : b;
-}
-
-int dlog2(int64_t p, int exponent_limit)
-{
-	int k1 = (int)int64_min(p, (int64_t)exponent_limit) - 1;
-	
-	// b^k
-	int64_t m = INT64_1;
-
-	int k = 0;
-
-#if 0
-	while( k < k1 )
-	{
-		// b^k = b^k * b = b^(k+1)
-		m <<= 1;
-		m %= p;
-
-		// k = k + 1
-		k++;
-
-		// b^k == g
-		if( INT64_1 == m )
-			return k;
-	}
-	// FIXME: m=0 never become 1 (although, probably not valid for p : PRIME)
-#else
-	while( k < k1 )
-	{
-		if( m & 1 )
-			m += p;
-		m >>= 1;
-
-		k++;
-
-		if( INT64_1 == m )
-			return k;
-	}
-#endif
-
-	// fallback
-	return 0;
-}
-
-static
-int64_t dlog2_r_lsb(int64_t p, int64_t K)
-{
-	assert( p > INT64_0 );
-
-	int64_t m = INT64_1;
-	int64_t k = INT64_0;
-
-	while( k < K )
-	{
-		if( m & INT64_1 )
-			m += p;
-		m >>= 1;
-
-		k++;
-	}
-
-	return m;
-}
-
-static
-void *bsearch_(const void *key, const void *base, size_t num, size_t size,
-		int (*cmp)(const void *key, const void *elt))
-{
-	size_t start = 0, end = num;
-	int result;
-
-	while (start < end) {
-		size_t mid = start + (end - start) / 2;
-
-		result = cmp(key, (int8_t *)base + mid * size);
-		if (result < 0)
-			end = mid;
-		else if (result > 0)
-			start = mid + 1;
-		else
-			return (int8_t *)base + mid * size;
-	}
-
-	return NULL;
-}
-
-static
-int cmp_int64(const void *p1, const void *p2)
-{
-	int64_t x = (*(const int64_t *)p2) - (*(const int64_t *)p1);
-	return (x < 0) ? -1 : (x > 0);
-}
-
-static
-int64_t int64_ceil_div(int64_t a, int64_t b)
-{
-	return (a + b - INT64_1) / b;
-}
-
-static
-int64_t dlog2_bga_qsort_limit(int64_t p, int64_t exponent_limit)
-{
-	assert( p > INT64_0 && (p & INT64_1) );
-
-	if( INT64_1 == p ) return INT64_0;
-
-	int64_t m = int64_ceil_div(int64_ceil_sqrt(p), 3);
-
-	size_t cache_size = 1<<20;
-	if( 2*m*sizeof(int64_t) > cache_size )
-		m = cache_size/2/sizeof(int64_t);
-	int64_t n = int64_ceil_div(p, m);
-
-	int64_t tab[2*m];
-
-	int64_t aj = INT64_1;
-	for(int64_t j = INT64_0; j < m; j++)
-	{
-		tab[2*j+0] = aj;
-		tab[2*j+1] = j;
-		aj <<= 1;
-		if( aj >= p )
-			aj -= p;
-		if( INT64_1 == aj ) return j+INT64_1;
-	}
-
-	qsort(tab, m, 2*sizeof(int64_t), cmp_int64);
-
-	int64_t am = dlog2_r_lsb(p, m);
-
-	if( p > INT64_1 && am > INT64_MAX / (p-INT64_1) )
-	{
-		message(WARN "'y *= am' could overflow!\n");
-		return dlog2(p, exponent_limit);
-	}
-
-	// i*m < exponent_limit
-	int64_t i_limit = int64_ceil_div(exponent_limit, m);
-
-	int64_t y = am;
-	for(int64_t i = INT64_1; i < n && i <= i_limit; i++)
-	{
-		const int64_t *res = bsearch_(&y, tab, m, 2*sizeof(int64_t), cmp_int64);
-		if( res )
-		{
-			return i*m + *(res+1);
-		}
-
-		y *= am;
-		y %= p;
-	}
-
-	return 0;
-}
-
 void test(char *record, int64_t factor, int exponent_limit, const char *primes)
 {
 	if( INT64_0 == (factor & (factor+INT64_1)) )
@@ -445,11 +263,7 @@ void test(char *record, int64_t factor, int exponent_limit, const char *primes)
 	}
 
 	// find M(n)
-	int n = dlog2_bga_qsort_limit(factor, exponent_limit);
-
-	// NOTE: dlog2_bga_qsort_limit can return 'n >= exponent_limit'
-	if( n >= exponent_limit )
-		return;
+	int n = (int)mp_int64_dlog2_bg_lim(factor, exponent_limit);
 
 	// check if the exponent is prime
 	if( is_prime(n, primes) )
