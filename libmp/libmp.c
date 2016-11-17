@@ -386,6 +386,7 @@ int128_t int128_ceil_sqrt(int128_t n)
 
 int128_t mp_int128_ceil_sqrt(int128_t n) { return int128_ceil_sqrt(n); }
 
+// http://stackoverflow.com/questions/2745074/fast-ceiling-of-an-integer-division-in-c-c
 static
 int64_t int64_ceil_div(int64_t a, int64_t b)
 {
@@ -436,6 +437,7 @@ int int128_cmp(const void *p1, const void *p2)
 #endif
 }
 
+// http://lxr.free-electrons.com/source/lib/bsearch.c
 static
 void *bsearch_(const void *key, const void *base, size_t num, size_t size,
 		int (*cmp)(const void *key, const void *elt))
@@ -525,6 +527,10 @@ int64_t int64_dlog2_bg_lim_mul128(int64_t p, int64_t L)
 	return 0;
 }
 
+// https://en.wikipedia.org/wiki/Baby-step_giant-step
+// timing on AMD Athlon 64 4000+
+// 1k .. 64s // 2k .. 42s // 4k .. 35s // 8k .. 43s // 16k .. 56s // 32k .. 56s // 512k .. 56s // dlog2_lsb .. 107s // for p < 1000000 // sqrt(p)/3 .. 33s
+// 1k .. 5415s // 2k .. 3107s // 4k .. 1826s // 8k .. 1261s // 16k ..1258s // 32k .. 1758s // 64k .. 2070s // 512k .. 2078s // dlog2_lsb .. 9551s // for p < 10000000 // sqrt(p)/3 .. 1149s
 // x in [0; L) : 2^x = 1 (mod p)
 static
 int64_t int64_dlog2_bg_lim(int64_t p, int64_t L)
