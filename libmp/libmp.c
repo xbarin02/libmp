@@ -527,6 +527,57 @@ int64_t int64_dlog2_bg_lim_mul128(int64_t p, int64_t L)
 	return 0;
 }
 
+static
+int64_t int64_dlog2_bg_mul128(int64_t p)
+{
+	assert( p > INT64_0 );
+	assert( p & INT64_1 );
+
+	if( INT64_1 == p )
+		return INT64_0;
+
+	int64_t m = int64_ceil_div(int64_ceil_sqrt(p), INT64_C(3));
+
+	size_t cache_size = 1<<20;
+	if( 2*(size_t)m*sizeof(int64_t) > cache_size )
+		m = (int64_t)( cache_size/2/sizeof(int64_t) );
+	int64_t n = int64_ceil_div(p, m);
+
+	int64_t tab[2*m];
+
+	int64_t aj = INT64_1;
+	for(int64_t j = INT64_0; j < m; j++)
+	{
+		tab[2*j+0] = aj;
+		tab[2*j+1] = j;
+
+		aj <<= 1;
+		if( aj >= p )
+			aj -= p;
+
+		if( INT64_1 == aj )
+			return j + INT64_1;
+	}
+
+	qsort(tab, (size_t)m, 2*sizeof(int64_t), int64_cmp);
+
+	int64_t am = int64_dpow2_mn(p, m);
+
+	int64_t y = am;
+	for(int64_t i = INT64_1; i < n; i++)
+	{
+		const int64_t *res = bsearch_(&y, tab, (size_t)m, 2*sizeof(int64_t), int64_cmp);
+		if( res )
+		{
+			return i*m + *(res+1);
+		}
+
+		y = int64_dmul_int128(p, y, am);
+	}
+
+	return 0;
+}
+
 // https://en.wikipedia.org/wiki/Baby-step_giant-step
 // timing on AMD Athlon 64 4000+
 // 1k .. 64s // 2k .. 42s // 4k .. 35s // 8k .. 43s // 16k .. 56s // 32k .. 56s // 512k .. 56s // dlog2_lsb .. 107s // for p < 1000000 // sqrt(p)/3 .. 33s
@@ -605,6 +656,71 @@ int64_t int64_dlog2_bg_lim(int64_t p, int64_t L)
 
 int64_t mp_int64_dlog2_bg_lim(int64_t p, int64_t L) { return int64_dlog2_bg_lim(p, L); }
 
+static
+int64_t int64_dlog2_bg(int64_t p)
+{
+	assert( p > INT64_0 );
+	assert( p & INT64_1 );
+
+	if( INT64_1 == p )
+		return INT64_0;
+
+	int64_t m = int64_ceil_div(int64_ceil_sqrt(p), INT64_C(3));
+
+	size_t cache_size = 1<<20;
+	if( 2*(size_t)m*sizeof(int64_t) > cache_size )
+		m = (int64_t)( cache_size/2/sizeof(int64_t) );
+	int64_t n = int64_ceil_div(p, m);
+
+	int64_t am = int64_dpow2_mn(p, m);
+
+	if( p > INT64_1 && am > INT64_MAX / (p - INT64_1) )
+	{
+		static int warned = 0;
+		if( !warned )
+		{
+			message(WARN "'y *= am' could overflow 64 bits! Falling to 128-bit multiplication... (this message will appear only once)\n");
+			warned = 1;
+		}
+		return (int64_t)int64_dlog2_bg_mul128(p);
+	}
+
+	int64_t tab[2*m];
+
+	int64_t aj = INT64_1;
+	for(int64_t j = INT64_0; j < m; j++)
+	{
+		tab[2*j+0] = aj;
+		tab[2*j+1] = j;
+
+		aj <<= 1;
+		if( aj >= p )
+			aj -= p;
+
+		if( INT64_1 == aj )
+			return j + INT64_1;
+	}
+
+	qsort(tab, (size_t)m, 2*sizeof(int64_t), int64_cmp);
+
+	int64_t y = am;
+	for(int64_t i = INT64_1; i < n; i++)
+	{
+		const int64_t *res = bsearch_(&y, tab, (size_t)m, 2*sizeof(int64_t), int64_cmp);
+		if( res )
+		{
+			return  i*m + *(res+1);
+		}
+
+		y *= am;
+		y %= p;
+	}
+
+	return 0;
+}
+
+int64_t mp_int64_dlog2_bg(int64_t p) { return int64_dlog2_bg(p); }
+
 // x in [0; L) : 2^x = 1 (mod p)
 static
 int128_t int128_dlog2_bg_lim(int128_t p, int128_t L)
@@ -673,6 +789,66 @@ int128_t int128_dlog2_bg_lim(int128_t p, int128_t L)
 }
 
 int128_t mp_int128_dlog2_bg_lim(int128_t p, int128_t L) { return int128_dlog2_bg_lim(p, L); }
+
+static
+int128_t int128_dlog2_bg(int128_t p)
+{
+	assert( p > INT128_0 );
+	assert( p & INT128_1 );
+
+	if( INT128_1 == p )
+		return INT128_0;
+
+	int128_t m = int128_ceil_div(int128_ceil_sqrt(p), INT128_C(3));
+
+	size_t cache_size = 1<<20;
+	if( 2*m*sizeof(int128_t) > cache_size )
+		m = cache_size/2/sizeof(int128_t);
+	int128_t n = int128_ceil_div(p, m);
+
+	int128_t am = int128_dpow2_mn(p, m);
+
+	if( p > INT128_1 && am > INT128_MAX / (p - INT128_1) )
+	{
+		message(WARN "'y *= am' could overflow 128 bits! Falling to a naive algorithm...\n");
+		return int128_dlog2_mn(p);
+	}
+
+	int128_t tab[2*m];
+
+	int128_t aj = INT128_1;
+	for(int128_t j = INT128_0; j < m; j++)
+	{
+		tab[2*j+0] = aj;
+		tab[2*j+1] = j;
+
+		aj <<= 1;
+		if( aj >= p )
+			aj -= p;
+
+		if( INT128_1 == aj )
+			return j + INT128_1;
+	}
+
+	qsort(tab, (size_t)m, 2*sizeof(int128_t), int128_cmp);
+
+	int128_t y = am;
+	for(int128_t i = INT128_1; i < n; i++)
+	{
+		const int128_t *res = bsearch_(&y, tab, (size_t)m, 2*sizeof(int128_t), int128_cmp);
+		if( res )
+		{
+			return i*m + *(res+1);
+		}
+
+		y *= am;
+		y %= p;
+	}
+
+	return 0;
+}
+
+int128_t mp_int128_dlog2_bg(int128_t p) { return int128_dlog2_bg(p); }
 
 // 0 : composite
 // > 0 : prime

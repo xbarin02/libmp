@@ -45,12 +45,14 @@ int main()
 
 		TEST(mp_int64_dlog2_mn, f);
 		TEST(mp_int64_dlog2_pl, f);
+		TEST(mp_int64_dlog2_bg, f);
 		TEST(mp_int64_dlog2_mn_lim, f, INT64_1<<62);
 		TEST(mp_int64_dlog2_pl_lim, f, INT64_1<<62);
 		TEST(mp_int64_dlog2_bg_lim, f, INT64_1<<62);
 
 		TEST(mp_int128_dlog2_mn, f);
 		TEST(mp_int128_dlog2_pl, f);
+		TEST(mp_int128_dlog2_bg, f);
 		TEST(mp_int128_dlog2_mn_lim, f, INT128_1<<126);
 		TEST(mp_int128_dlog2_pl_lim, f, INT128_1<<126);
 		TEST(mp_int128_dlog2_bg_lim, f, INT128_1<<126);

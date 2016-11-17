@@ -324,7 +324,7 @@ int main(int argc, char *argv[])
 			int64_t f = atol(argv[1]);
 			printf("dlog2(%" PRId64 ") = %" PRId64 " (MSB)\n", f, mp_int64_dlog2_pl(f));
 			printf("dlog2(%" PRId64 ") = %" PRId64 " (LSB)\n", f, mp_int64_dlog2_mn(f));
-			printf("dlog2(%" PRId64 ") = %" PRId64 " (BGA)\n", f, dlog2_bga_qsort(f));
+			printf("dlog2(%" PRId64 ") = %" PRId64 " (BGA)\n", f, mp_int64_dlog2_bg(f));
 		}
 			break;
 		case 3:

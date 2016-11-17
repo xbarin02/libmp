@@ -44,27 +44,19 @@ int main()
 			int64_t r = dlog2(f);
 
 			// 64-bit tests
-			// TEST: mp_int64_dlog2_mn
 			assert( r == mp_int64_dlog2_mn(f) );
-			// TEST: mp_int64_dlog2_pl
 			assert( r == mp_int64_dlog2_pl(f) );
-			// TEST: mp_int64_dlog2_mn_lim
+			assert( r == mp_int64_dlog2_bg(f) );
 			assert( r == mp_int64_dlog2_mn_lim(f, INT64_1<<62) );
-			// TEST: mp_int64_dlog2_pl_lim
 			assert( r == mp_int64_dlog2_pl_lim(f, INT64_1<<62) );
-			// TEST: mp_int64_dlog2_bg_lim
 			assert( r == mp_int64_dlog2_bg_lim(f, INT64_1<<62) );
 
 			// 128-bit tests
-			// TEST: mp_int128_dlog2_mn
 			assert( r == mp_int128_dlog2_mn(f) );
-			// TEST: mp_int128_dlog2_pl
 			assert( r == mp_int128_dlog2_pl(f) );
-			// TEST: mp_int128_dlog2_mn_lim
+			assert( r == mp_int128_dlog2_bg(f) );
 			assert( r == mp_int128_dlog2_mn_lim(f, INT128_1<<126) );
-			// TEST: mp_int128_dlog2_pl_lim
 			assert( r == mp_int128_dlog2_pl_lim(f, INT128_1<<126) );
-			// TEST: mp_int128_dlog2_bg_lim
 			assert( r == mp_int128_dlog2_bg_lim(f, INT128_1<<126) );
 		}
 	}

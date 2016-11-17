@@ -36,6 +36,7 @@ int64_t mp_int64_dpow2_pl(int64_t p, int64_t K);
 
 int64_t mp_int64_dlog2_mn(int64_t p);
 int64_t mp_int64_dlog2_pl(int64_t p);
+int64_t mp_int64_dlog2_bg(int64_t p);
 
 int64_t mp_int64_dlog2_mn_lim(int64_t p, int64_t L);
 int64_t mp_int64_dlog2_pl_lim(int64_t p, int64_t L);
@@ -77,6 +78,7 @@ int128_t mp_int128_dpow2_pl(int128_t p, int128_t K);
 
 int128_t mp_int128_dlog2_mn(int128_t p);
 int128_t mp_int128_dlog2_pl(int128_t p);
+int128_t mp_int128_dlog2_bg(int128_t p);
 
 int128_t mp_int128_dlog2_mn_lim(int128_t p, int128_t L);
 int128_t mp_int128_dlog2_pl_lim(int128_t p, int128_t L);
