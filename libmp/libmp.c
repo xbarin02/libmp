@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <inttypes.h>
 
+// TODO: implement using exponentiation by squaring (x**=2, x*=b)
 // 2^(+k) (mod p) [MSB, slower]
 static
 int64_t int64_dpow2_pl(int64_t p, int64_t K)
@@ -33,6 +34,7 @@ int64_t int64_dpow2_pl(int64_t p, int64_t K)
 
 int64_t mp_int64_dpow2_pl(int64_t p, int64_t K) { return int64_dpow2_pl(p, K); }
 
+// TODO: implement using exponentiation by squaring (x**=2, x*=b)
 // 2^(+k) (mod p) [MSB, slower]
 static
 int128_t int128_dpow2_pl(int128_t p, int128_t K)
@@ -56,6 +58,7 @@ int128_t int128_dpow2_pl(int128_t p, int128_t K)
 
 int128_t mp_int128_dpow2_pl(int128_t p, int128_t K) { return int128_dpow2_pl(p, K); }
 
+// TODO: implement using exponentiation by squaring (x**=2, x*=b)
 // 2^(-k) (mod p) [LSB, faster]
 static
 int64_t int64_dpow2_mn(int64_t p, int64_t K)
@@ -79,6 +82,7 @@ int64_t int64_dpow2_mn(int64_t p, int64_t K)
 
 int64_t mp_int64_dpow2_mn(int64_t p, int64_t K) { return int64_dpow2_mn(p, K); }
 
+// TODO: implement using exponentiation by squaring (x**=2, x*=b)
 // 2^(-k) (mod p) [LSB, faster]
 static
 int128_t int128_dpow2_mn(int128_t p, int128_t K)
@@ -344,6 +348,7 @@ int128_t int128_dlog2_pl_lim(int128_t p, int128_t L)
 
 int128_t mp_int128_dlog2_pl_lim(int128_t p, int128_t L) { return int128_dlog2_pl_lim(p, L); }
 
+static
 int64_t int64_ceil_sqrt(int64_t n)
 {
 	assert( n > INT64_0 );
@@ -362,6 +367,7 @@ int64_t int64_ceil_sqrt(int64_t n)
 
 int64_t mp_int64_ceil_sqrt(int64_t n) { return int64_ceil_sqrt(n); }
 
+static
 int128_t int128_ceil_sqrt(int128_t n)
 {
 	assert( n > INT128_0 );
