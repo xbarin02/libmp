@@ -762,7 +762,15 @@ int64_t int64_dlog2_bg(int64_t p)
 
 	size_t cache_size = 1<<20;
 	if( 2*(size_t)m*sizeof(int64_t) > cache_size )
+	{
+		static int warned = 0;
+		if( !warned )
+		{
+			message(WARN "table will be truncated to fit into cache... (this message will appear only once)\n");
+			warned = 1;
+		}
 		m = (int64_t)( cache_size/2/sizeof(int64_t) );
+	}
 	int64_t n = int64_ceil_div(p, m);
 
 #ifndef BSGS_INVERSE
