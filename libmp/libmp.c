@@ -10,7 +10,105 @@
 #include <stdio.h>
 #include <inttypes.h>
 
-// TODO: implement using exponentiation by squaring (x**=2, x*=b)
+// a*b (mod p)
+static
+int64_t int64_dmul_int128(int64_t p, int64_t a, int64_t b)
+{
+	return (int64_t)( ( (int128_t)a * (int128_t)b ) % (int128_t)p );
+}
+
+// a*b (mod p)
+static
+int64_t int64_dmul_int64_assert(int64_t p, int64_t a, int64_t b)
+{
+	assert( a <= INT64_MAX / b );
+
+	return (a * b) % p;
+}
+
+// a*b (mod p)
+static
+int128_t int128_dmul_int128_assert(int128_t p, int128_t a, int128_t b)
+{
+	assert( a <= INT128_MAX / b );
+
+	return (a * b) % p;
+}
+
+// 2^(+K) (mod p), exponentiation by squaring, log2(K) complexity
+static
+int64_t int64_dpow2_pl_log(int64_t p, int64_t K)
+{
+	assert( p > INT64_0 );
+	assert( K >= INT64_0 );
+#if 1
+	int64_t b = INT64_2;
+	int64_t m = INT64_1;
+
+	while( K > INT64_0 )
+	{
+		if( INT64_1 & K )
+		{
+			m = int64_dmul_int64_assert(p, m, b);
+		}
+
+		b = int64_dmul_int64_assert(p, b, b);
+
+		K >>= 1;
+	}
+
+	return m;
+#endif
+#if 0
+	int64_t b = INT64_2;
+	int64_t m = INT64_1;
+
+	while( K > INT64_0 )
+	{
+		if( INT64_1 & K )
+		{
+			m = int64_dmul_int128(p, m, b);
+		}
+
+		b = int64_dmul_int128(p, b, b);
+
+		K >>= 1;
+	}
+
+	return m;
+#endif
+}
+
+int64_t mp_int64_dpow2_pl_log(int64_t p, int64_t K) { return int64_dpow2_pl_log(p, K); }
+
+// 2^(+K) (mod p), exponentiation by squaring, log2(K) complexity
+static
+int128_t int128_dpow2_pl_log(int128_t p, int128_t K)
+{
+	assert( p > INT128_0 );
+	assert( K >= INT128_0 );
+#if 1
+	int128_t b = INT128_2;
+	int128_t m = INT128_1;
+
+	while( K > INT128_0 )
+	{
+		if( INT128_1 & K )
+		{
+			m = int128_dmul_int128_assert(p, m, b);
+		}
+
+		b = int128_dmul_int128_assert(p, b, b);
+
+		K >>= 1;
+	}
+
+	return m;
+#endif
+}
+
+int128_t mp_int128_dpow2_pl_log(int128_t p, int128_t K) { return int128_dpow2_pl_log(p, K); }
+
 // 2^(+k) (mod p) [MSB, slower]
 static
 int64_t int64_dpow2_pl(int64_t p, int64_t K)
@@ -34,7 +132,6 @@ int64_t int64_dpow2_pl(int64_t p, int64_t K)
 
 int64_t mp_int64_dpow2_pl(int64_t p, int64_t K) { return int64_dpow2_pl(p, K); }
 
-// TODO: implement using exponentiation by squaring (x**=2, x*=b)
 // 2^(+k) (mod p) [MSB, slower]
 static
 int128_t int128_dpow2_pl(int128_t p, int128_t K)
@@ -458,13 +555,6 @@ void *bsearch_(const void *key, const void *base, size_t num, size_t size,
 	}
 
 	return NULL;
-}
-
-// a*b (mod p)
-static
-int64_t int64_dmul_int128(int64_t p, int64_t a, int64_t b)
-{
-	return (int64_t)( ( (int128_t)a * (int128_t)b ) % (int128_t)p );
 }
 
 // x in [0; L) : 2^x = 1 (mod p)

@@ -80,6 +80,8 @@ int main()
 		// debugging purposes
 		printf("\t factor = %li\n", f);
 
+		// (mod 1) is problematic: should 2^1 (mod 1) be zero?
+		if( f > 1 )
 		{
 			// random power < 2*f
 			int64_t k = (uint64_t)int64_random(random_file) % (2*f);
@@ -90,17 +92,19 @@ int main()
 			{
 				// (-)
 				const int64_t r_mn = dpow2_mn(f, k);
-				// TEST: mp_int64_dpow2_mn
 				assert( r_mn == mp_int64_dpow2_mn(f, k) );
-				// TEST: mp_int128_dpow2_mn
 				assert( r_mn == mp_int128_dpow2_mn(f, k) );
 
 				// (+)
 				const int64_t r_pl = dpow2_pl(f, k);
-				// TEST: mp_int64_dpow2_pl
 				assert( r_pl == mp_int64_dpow2_pl(f, k) );
-				// TEST: mp_int128_dpow2_pl
 				assert( r_pl == mp_int128_dpow2_pl(f, k) );
+				if( r_pl != mp_int64_dpow2_pl_log(f, k) )
+				{
+					printf("\t\t (+) reference = %li\n\t\t mp_int64_dpow2_pl_log = %li\n", r_pl, mp_int64_dpow2_pl_log(f, k));
+				}
+				assert( r_pl == mp_int64_dpow2_pl_log(f, k) );
+				assert( r_pl == mp_int128_dpow2_pl_log(f, k) );
 			}
 		}
 	}

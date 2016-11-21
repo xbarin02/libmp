@@ -47,13 +47,15 @@ int main()
 	{
 		printf("testing the bit level %i...\n", bit_level);
 
+		// (-)
 		TEST(mp_int64_dpow2_mn);
-
 		TEST(mp_int128_dpow2_mn);
 
+		// (+)
 		TEST(mp_int64_dpow2_pl);
-
 		TEST(mp_int128_dpow2_pl);
+		TEST(mp_int64_dpow2_pl_log);
+		TEST(mp_int128_dpow2_pl_log);
 	}
 
 	return 0;

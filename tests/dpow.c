@@ -61,17 +61,15 @@ int main()
 			{
 				// (-)
 				const int64_t r_mn = dpow2_mn(f, k);
-				// TEST: mp_int64_dpow2_mn
 				assert( r_mn == mp_int64_dpow2_mn(f, k) );
-				// TEST: mp_int128_dpow2_mn
 				assert( r_mn == mp_int128_dpow2_mn(f, k) );
 
 				// (+)
 				const int64_t r_pl = dpow2_pl(f, k);
-				// TEST: mp_int64_dpow2_pl
 				assert( r_pl == mp_int64_dpow2_pl(f, k) );
-				// TEST: mp_int128_dpow2_pl
 				assert( r_pl == mp_int128_dpow2_pl(f, k) );
+				assert( r_pl == mp_int64_dpow2_pl_log(f, k) );
+				assert( r_pl == mp_int128_dpow2_pl_log(f, k) );
 			}
 		}
 	}
