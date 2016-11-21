@@ -32,6 +32,7 @@ int mp_int_is_prime_cached(int p, const uint8_t *primes);
 #define INT64_2 INT64_C(2)
 
 int64_t mp_int64_dpow2_mn(int64_t p, int64_t K);
+int64_t mp_int64_dpow2_mn_log(int64_t p, int64_t K);
 int64_t mp_int64_dpow2_pl(int64_t p, int64_t K);
 int64_t mp_int64_dpow2_pl_log(int64_t p, int64_t K);
 
@@ -75,6 +76,7 @@ typedef unsigned __int128 uint128_t;
 #define INT128_MIN (-INT128_MAX - 1)
 
 int128_t mp_int128_dpow2_mn(int128_t p, int128_t K);
+int128_t mp_int128_dpow2_mn_log(int128_t p, int128_t K);
 int128_t mp_int128_dpow2_pl(int128_t p, int128_t K);
 int128_t mp_int128_dpow2_pl_log(int128_t p, int128_t K);
 

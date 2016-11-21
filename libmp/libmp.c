@@ -38,7 +38,7 @@ int128_t int128_dmul_int128_assert(int128_t p, int128_t a, int128_t b)
 	return (a * b) % p;
 }
 
-// 2^(+K) (mod p), exponentiation by squaring, log2(K) complexity
+// 2^(+K) (mod p), exponentiation by squaring, O(log2(K)) complexity
 static
 int64_t int64_dpow2_pl_log(int64_t p, int64_t K)
 {
@@ -84,7 +84,7 @@ int64_t int64_dpow2_pl_log(int64_t p, int64_t K)
 
 int64_t mp_int64_dpow2_pl_log(int64_t p, int64_t K) { return int64_dpow2_pl_log(p, K); }
 
-// 2^(+K) (mod p), exponentiation by squaring, log2(K) complexity
+// 2^(+K) (mod p), exponentiation by squaring, O(log2(K)) complexity
 static
 int128_t int128_dpow2_pl_log(int128_t p, int128_t K)
 {
@@ -112,7 +112,7 @@ int128_t int128_dpow2_pl_log(int128_t p, int128_t K)
 
 int128_t mp_int128_dpow2_pl_log(int128_t p, int128_t K) { return int128_dpow2_pl_log(p, K); }
 
-// 2^(+k) (mod p) [MSB, slower]
+// 2^(+K) (mod p), O(K) complexity
 static
 int64_t int64_dpow2_pl(int64_t p, int64_t K)
 {
@@ -135,7 +135,7 @@ int64_t int64_dpow2_pl(int64_t p, int64_t K)
 
 int64_t mp_int64_dpow2_pl(int64_t p, int64_t K) { return int64_dpow2_pl(p, K); }
 
-// 2^(+k) (mod p) [MSB, slower]
+// 2^(+K) (mod p), O(K) complexity
 static
 int128_t int128_dpow2_pl(int128_t p, int128_t K)
 {
@@ -158,8 +158,7 @@ int128_t int128_dpow2_pl(int128_t p, int128_t K)
 
 int128_t mp_int128_dpow2_pl(int128_t p, int128_t K) { return int128_dpow2_pl(p, K); }
 
-// TODO: implement using exponentiation by squaring (x**=2, x*=b)
-// 2^(-k) (mod p) [LSB, faster]
+// 2^(-K) (mod p), O(K) complexity
 static
 int64_t int64_dpow2_mn(int64_t p, int64_t K)
 {
@@ -182,8 +181,45 @@ int64_t int64_dpow2_mn(int64_t p, int64_t K)
 
 int64_t mp_int64_dpow2_mn(int64_t p, int64_t K) { return int64_dpow2_mn(p, K); }
 
-// TODO: implement using exponentiation by squaring (x**=2, x*=b)
-// 2^(-k) (mod p) [LSB, faster]
+// 2^(-K) (mod p), O(log2(K)) complexity
+static
+int64_t int64_dpow2_mn_log(int64_t p, int64_t K)
+{
+#if 1
+	int64_t m = INT64_1;
+	for(int b = 8*sizeof(int64_t)-1; b >= 0; b--)
+	{
+		m = int64_dmul_int64_assert(p, m, m);
+
+		if( K & (INT64_1<<b) )
+		{
+			if( m & INT64_1 )
+				m += p;
+			m >>= 1;
+		}
+	}
+	return m;
+#endif
+#if 0
+	int64_t m = INT64_1;
+	for(int b = 8*sizeof(int64_t)-1; b >= 0; b--)
+	{
+		m = int64_dmul_int128(p, m, m);
+
+		if( K & (INT64_1<<b) )
+		{
+			if( m & INT64_1 )
+				m += p;
+			m >>= 1;
+		}
+	}
+	return m;
+#endif
+}
+
+int64_t mp_int64_dpow2_mn_log(int64_t p, int64_t K) { return int64_dpow2_mn_log(p, K); }
+
+// 2^(-K) (mod p), O(K) complexity
 static
 int128_t int128_dpow2_mn(int128_t p, int128_t K)
 {
@@ -205,6 +241,44 @@ int128_t int128_dpow2_mn(int128_t p, int128_t K)
 }
 
 int128_t mp_int128_dpow2_mn(int128_t p, int128_t K) { return int128_dpow2_mn(p, K); }
+
+// 2^(-K) (mod p), O(log2(K)) complexity
+static
+int128_t int128_dpow2_mn_log(int128_t p, int128_t K)
+{
+#if 1
+	int128_t m = INT128_1;
+	for(int b = 8*sizeof(int128_t)-1; b >= 0; b--)
+	{
+		m = int128_dmul_int128_assert(p, m, m);
+
+		if( K & (INT128_1<<b) )
+		{
+			if( m & INT128_1 )
+				m += p;
+			m >>= 1;
+		}
+	}
+	return m;
+#endif
+#if 0
+	int128_t m = INT128_1;
+	for(int b = 8*sizeof(int128_t)-1; b >= 0; b--)
+	{
+		m = int128_dmul_int128(p, m, m);
+
+		if( K & (INT128_1<<b) )
+		{
+			if( m & INT128_1 )
+				m += p;
+			m >>= 1;
+		}
+	}
+	return m;
+#endif
+}
+
+int128_t mp_int128_dpow2_mn_log(int128_t p, int128_t K) { return int128_dpow2_mn_log(p, K); }
 
 // x : 2^x = 1 (mod p) [LSB, faster]
 static

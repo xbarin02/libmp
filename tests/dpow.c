@@ -63,6 +63,8 @@ int main()
 				const int64_t r_mn = dpow2_mn(f, k);
 				assert( r_mn == mp_int64_dpow2_mn(f, k) );
 				assert( r_mn == mp_int128_dpow2_mn(f, k) );
+				assert( r_mn == mp_int64_dpow2_mn_log(f, k) );
+				assert( r_mn == mp_int128_dpow2_mn_log(f, k) );
 
 				// (+)
 				const int64_t r_pl = dpow2_pl(f, k);
