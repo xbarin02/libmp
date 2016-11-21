@@ -10,6 +10,9 @@
 #include <stdio.h>
 #include <inttypes.h>
 
+// use a^(+m) rather than a^(-m) in baby-step giant-step algorithm
+// #define BSGS_INVERSE
+
 // a*b (mod p)
 static
 int64_t int64_dmul_int128(int64_t p, int64_t a, int64_t b)
@@ -762,7 +765,11 @@ int64_t int64_dlog2_bg(int64_t p)
 		m = (int64_t)( cache_size/2/sizeof(int64_t) );
 	int64_t n = int64_ceil_div(p, m);
 
+#ifndef BSGS_INVERSE
 	int64_t am = int64_dpow2_mn(p, m);
+#else
+	int64_t am = int64_dpow2_pl(p, m);
+#endif
 
 	if( p > INT64_1 && am > INT64_MAX / (p - INT64_1) )
 	{
@@ -783,9 +790,15 @@ int64_t int64_dlog2_bg(int64_t p)
 		tab[2*j+0] = aj;
 		tab[2*j+1] = j;
 
+#ifndef BSGS_INVERSE
 		aj <<= 1;
 		if( aj >= p )
 			aj -= p;
+#else
+		if( aj & INT64_1 )
+			aj += p;
+		aj >>= 1;
+#endif
 
 		if( INT64_1 == aj )
 			return j + INT64_1;
