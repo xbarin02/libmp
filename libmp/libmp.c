@@ -1,4 +1,5 @@
 #include "libmp.h"
+#include "hsort.h"
 
 #include <stdint.h>
 #include <assert.h>
@@ -866,39 +867,39 @@ int64_t int64_dlog2_bg(int64_t p)
 
 	int64_t tab[2*m];
 
-	int64_t aj = INT64_1;
-	for(int64_t j = INT64_0; j < m; j++)
+	for(int64_t i = INT64_0, x = INT64_1; i < m; i++)
 	{
-		tab[2*j+0] = aj;
-		tab[2*j+1] = j;
+		tab[2*i+0] = x;
+		tab[2*i+1] = i;
 
 #ifndef BSGS_INVERSE
-		aj <<= 1;
-		if( aj >= p )
-			aj -= p;
+		x <<= 1;
+		if( x >= p )
+			x -= p;
 #else
-		if( aj & INT64_1 )
-			aj += p;
-		aj >>= 1;
+		if( x & INT64_1 )
+			x += p;
+		x >>= 1;
 #endif
 
-		if( INT64_1 == aj )
-			return j + INT64_1;
+		if( INT64_1 == x )
+			return i + INT64_1;
 	}
 
 	qsort(tab, (size_t)m, 2*sizeof(int64_t), int64_cmp);
+// 	mp_hsort(tab, (size_t)m, 2*sizeof(int64_t), int64_cmp, 0);
+// 	mp_hsort_i64_u128(tab, (size_t)m);
 
-	int64_t y = am;
-	for(int64_t i = INT64_1; i < n; i++)
+	for(int64_t i = INT64_1, x = am; i < n; i++)
 	{
-		const int64_t *res = bsearch_(&y, tab, (size_t)m, 2*sizeof(int64_t), int64_cmp);
+		const int64_t *res = bsearch_(&x, tab, (size_t)m, 2*sizeof(int64_t), int64_cmp);
 		if( res )
 		{
-			return  i*m + *(res+1);
+			return  i*m + *(res+1) ;
 		}
 
-		y *= am;
-		y %= p;
+		x *= am;
+		x %= p;
 	}
 
 	return 0;
