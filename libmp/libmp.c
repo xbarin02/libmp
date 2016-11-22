@@ -892,10 +892,13 @@ int64_t int64_dlog2_bg(int64_t p)
 
 	for(int64_t i = INT64_1, x = am; i < n; i++)
 	{
+		if( INT64_1 == x )
+			return i*m;
+
 		const int64_t *res = bsearch_(&x, tab, (size_t)m, 2*sizeof(int64_t), int64_cmp);
 		if( res )
 		{
-			return  i*m + *(res+1) ;
+			return  i*m + *(res+1);
 		}
 
 		x *= am;
