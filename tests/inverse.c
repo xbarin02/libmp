@@ -18,18 +18,35 @@ int main()
 			for(int64_t x = 1; x < n; x++)
 			{
 				// compute inverse x
-				int64_t inv_x = mp_int64_inverse(x, n);
-
-				// not invertible
-				if( 0 == inv_x )
 				{
-					// The multiplicative inverse of a modulo m exists if and only if a and m are coprime (i.e., if gcd(a, m) = 1).
-					assert( 1 != mp_int64_gcd(x, n) );
+					int64_t inv_x = mp_int64_inverse(x, n);
 
-					continue;
+					// not invertible
+					if( 0 == inv_x )
+					{
+						// The multiplicative inverse of a modulo m exists if and only if a and m are coprime (i.e., if gcd(a, m) = 1).
+						assert( 1 != mp_int64_gcd(x, n) );
+
+						continue;
+					}
+
+					assert( 1 == (x * inv_x) % n );
 				}
 
-				assert( 1 == (x * inv_x) % n );
+				{
+					int128_t inv_x = mp_int128_inverse(x, n);
+
+					// not invertible
+					if( 0 == inv_x )
+					{
+						// The multiplicative inverse of a modulo m exists if and only if a and m are coprime (i.e., if gcd(a, m) = 1).
+						assert( 1 != mp_int128_gcd(x, n) );
+
+						continue;
+					}
+
+					assert( 1 == (x * inv_x) % n );
+				}
 			}
 		}
 	}

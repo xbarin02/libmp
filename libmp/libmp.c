@@ -925,11 +925,27 @@ int64_t int64_gcd(int64_t a, int64_t b)
 
 int64_t mp_int64_gcd(int64_t a, int64_t b) { return int64_gcd(a, b); }
 
+static
+int128_t int128_gcd(int128_t a, int128_t b)
+{
+	while( b != 0 )
+	{
+		int128_t t = b;
+		b = a % b;
+		a = t;
+	}
+
+	return a;
+}
+
+int128_t mp_int128_gcd(int128_t a, int128_t b) { return int128_gcd(a, b); }
+
 // x : a*x = 1 (mod n)
 static
 int64_t int64_inverse(int64_t a, int64_t n)
 {
 	assert( a > INT64_0 );
+	assert( n > INT64_0 );
 #if 1
 	int64_t t = INT64_0, s = INT64_1;
 	int64_t r = n;
@@ -966,6 +982,49 @@ int64_t int64_inverse(int64_t a, int64_t n)
 }
 
 int64_t mp_int64_inverse(int64_t a, int64_t n) { return int64_inverse(a, n); }
+
+// x : a*x = 1 (mod n)
+static
+int128_t int128_inverse(int128_t a, int128_t n)
+{
+	assert( a > INT128_0 );
+	assert( n > INT128_0 );
+#if 1
+	int128_t t = INT128_0, s = INT128_1;
+	int128_t r = n;
+
+	while( a != INT128_0 )
+	{
+		int128_t q = r / a;
+
+		int128_t s1 = s;
+		s = t - q * s;
+		t = s1;
+
+		int128_t a1 = a;
+		a = r % a; // a = r - q * a;
+		r = a1;
+	}
+
+	// not invertible
+	if(r > INT128_1)
+		return INT128_0;
+
+	if(t < INT128_0)
+		t += n;
+
+	return t;
+#endif
+#if 0
+	for(int128_t i = INT128_1; i < n; i++)
+		if( INT128_1 == (i*a) % n )
+			return i;
+
+	return INT128_0;
+#endif
+}
+
+int128_t mp_int128_inverse(int128_t a, int128_t n) { return int128_inverse(a, n); }
 
 // x in [0; L) : 2^x = 1 (mod p)
 static
