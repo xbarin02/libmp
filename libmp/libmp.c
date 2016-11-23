@@ -11,6 +11,12 @@
 #include <stdio.h>
 #include <inttypes.h>
 
+static
+void __attribute__ ((constructor)) init()
+{
+	message("libmp loaded\n");
+}
+
 // use a^(+m) rather than a^(-m) in baby-step giant-step algorithm
 // #define BSGS_INVERSE
 
