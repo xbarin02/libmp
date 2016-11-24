@@ -10,6 +10,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <inttypes.h>
+#include <strings.h>
 
 static
 void __attribute__ ((constructor)) init()
@@ -830,6 +831,11 @@ int64_t int64_dlog2_bg_lim(int64_t p, int64_t L)
 
 int64_t mp_int64_dlog2_bg_lim(int64_t p, int64_t L) { return int64_dlog2_bg_lim(p, L); }
 
+// #define BSGS_HASH
+#define BSGS_HASH_BITS 4
+#define BSGS_HASH_ENTRIES (INT64_1<<BSGS_HASH_BITS)
+#define BSGS_HASH_MASK (BSGS_HASH_ENTRIES-INT64_1)
+
 static
 int64_t int64_dlog2_bg(int64_t p)
 {
@@ -871,12 +877,29 @@ int64_t int64_dlog2_bg(int64_t p)
 		return (int64_t)int64_dlog2_bg_mul128(p);
 	}
 
+#ifndef BSGS_HASH
 	int64_t tab[2*m];
+#else
+	int64_t hash[BSGS_HASH_ENTRIES * 2*m];
+	bzero(hash, sizeof(int64_t) * (size_t)BSGS_HASH_ENTRIES * 2*(size_t)m);
+#endif
 
 	for(int64_t i = INT64_0, x = INT64_1; i < m; i++)
 	{
+#ifndef BSGS_HASH
 		tab[2*i+0] = x;
 		tab[2*i+1] = i;
+#else
+		{
+			int64_t *entry = hash + (BSGS_HASH_MASK&x) * 2*m;
+			int64_t *end = hash + ((BSGS_HASH_MASK&x)+1) * 2*m;
+			while( entry < end && *(entry+0) )
+				entry += 2;
+			assert( entry != end );
+			*(entry+0) = x;
+			*(entry+1) = i;
+		}
+#endif
 
 #ifndef BSGS_INVERSE
 		x <<= 1;
@@ -892,16 +915,35 @@ int64_t int64_dlog2_bg(int64_t p)
 			return i + INT64_1;
 	}
 
+#ifndef BSGS_HASH
 	qsort(tab, (size_t)m, 2*sizeof(int64_t), int64_cmp);
 // 	mp_hsort(tab, (size_t)m, 2*sizeof(int64_t), int64_cmp, 0);
 // 	mp_hsort_i64_u128(tab, (size_t)m);
+#endif
 
 	for(int64_t i = INT64_1, x = am; i < n; i++)
 	{
 		if( INT64_1 == x )
 			return i*m;
 
+#ifndef BSGS_HASH
 		const int64_t *res = bsearch_(&x, tab, (size_t)m, 2*sizeof(int64_t), int64_cmp);
+#else
+		const int64_t *res = NULL;
+		{
+			int64_t *entry = hash + (BSGS_HASH_MASK&x) * 2*m;
+			int64_t *end = hash + ((BSGS_HASH_MASK&x)+1) * 2*m;
+			while( entry < end && *(entry+0) )
+			{
+				if( x == *(entry+0) )
+				{
+					res = entry;
+					break;
+				}
+				entry += 2;
+			}
+		}
+#endif
 		if( res )
 		{
 			return  i*m + *(res+1);
