@@ -286,6 +286,7 @@ int main(int argc, char *argv[])
 	}
 
 	int less = 1, equal = 1, greater = 1;
+	int rec0_cnt = 0, rec1_cnt = 0;
 
 	for(int n = 1; n < exponent_limit; n++)
 	{
@@ -299,6 +300,7 @@ int main(int argc, char *argv[])
 			{
 				equal = 0;
 				greater = 0;
+				rec1_cnt++;
 
 				if(verbose)
 					message("<\tM(%i)\n", n);
@@ -307,6 +309,7 @@ int main(int argc, char *argv[])
 			{
 				equal = 0;
 				less = 0;
+				rec0_cnt++;
 
 				if(verbose)
 					message(">\tM(%i)\n", n);
@@ -323,7 +326,7 @@ int main(int argc, char *argv[])
 	else if( greater )
 		message("'%s' > '%s'\n", record0_path, record1_path); // superset
 	else
-		message("the record are completely different\n");
+		message("'%s' (+%i) != '%s' (+%i) (the record are completely different)\n", record0_path, rec0_cnt, record1_path, rec1_cnt);
 
 	free(record0);
 	free(record1);
