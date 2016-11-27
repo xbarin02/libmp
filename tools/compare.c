@@ -230,9 +230,10 @@ int main(int argc, char *argv[])
 	int exponent_limit = -1;
 	const char *record0_path = "record.bits";
 	const char *record1_path = "record.bits";
+	int verbose = 0;
 
 	// parse command-line options
-	for(int opt; (opt = getopt(argc, argv, "h:")) != -1;)
+	for(int opt; (opt = getopt(argc, argv, "h:v")) != -1;)
 	{
 		switch(opt)
 		{
@@ -244,6 +245,10 @@ int main(int argc, char *argv[])
 					message(WARN "Invalid exponent, keeping the default one!\n");
 					exponent_limit = -1;
 				}
+				break;
+			// -v : verbose (print the differences)
+			case 'v':
+				verbose = 1;
 				break;
 			default :
 				message(WARN "Unknown option :( Read the source code!\n");
@@ -291,9 +296,21 @@ int main(int argc, char *argv[])
 			int b1 = get_bit(record1, n);
 
 			if( b0 < b1 ) // 0-1
-				equal = 0, greater = 0;
+			{
+				equal = 0;
+				greater = 0;
+
+				if(verbose)
+					message("<\tM(%i)\n", n);
+			}
 			else if( b0 > b1 ) // 1-0
-				equal = 0, less = 0;
+			{
+				equal = 0;
+				less = 0;
+
+				if(verbose)
+					message(">\tM(%i)\n", n);
+			}
 			else // 0-0 or 1-1
 			{}
 		}
