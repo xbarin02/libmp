@@ -234,7 +234,7 @@ int main(int argc, char *argv[])
 	const char *factored_path = "factored.txt";
 
 	// parse command-line options
-	for(int opt; (opt = getopt(argc, argv, "h:")) != -1;)
+	for(int opt; (opt = getopt(argc, argv, "f:p:h:")) != -1;)
 	{
 		switch(opt)
 		{
