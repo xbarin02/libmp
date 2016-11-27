@@ -320,13 +320,13 @@ int main(int argc, char *argv[])
 	}
 
 	if( equal )
-		message("'%s' = '%s'\n",  record0_path, record1_path); // is equal to
+		message("'%s' = '%s'\n", record0_path, record1_path); // is equal to
 	else if( less )
 		message("'%s' < '%s'\n", record0_path, record1_path); // is subset of
 	else if( greater )
-		message("'%s' > '%s'\n", record0_path, record1_path); // superset
+		message("'%s' > '%s'\n", record0_path, record1_path); // is superset of
 	else
-		message("'%s' (+%i) != '%s' (+%i) (the record are completely different)\n", record0_path, rec0_cnt, record1_path, rec1_cnt);
+		message("'%s' (+%i) != '%s' (+%i) (the records are completely different)\n", record0_path, rec0_cnt, record1_path, rec1_cnt);
 
 	free(record0);
 	free(record1);
