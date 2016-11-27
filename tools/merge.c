@@ -141,7 +141,7 @@ int main(int argc, char *argv[])
 	message("%s: Sieve of Mersenne exponents, record merger\n", argv[0]);
 
 	int exponent_limit = -1;
-	const char *output_path = "output.bits";
+	const char *output_path = "merged.bits";
 	int reset = 0;
 
 	// parse command-line options

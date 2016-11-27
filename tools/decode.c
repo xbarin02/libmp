@@ -229,7 +229,7 @@ int main(int argc, char *argv[])
 	message("%s: Sieve of Mersenne exponents, file decoder\n", argv[0]);
 
 	int exponent_limit = -1;
-	const char *record_path = "record.bits";
+	const char *record_path = "merged.bits";
 	const char *candidates_path = "candidates.txt";
 	const char *factored_path = "factored.txt";
 
