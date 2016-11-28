@@ -388,7 +388,7 @@ void sieve(char *record, int exponent_limit, const char *record_path, const char
 
 		int64_t factor = int64_random_factor(n, random_file);
 
-		mp_int64_test_direct((uint8_t *)record, factor, exponent_limit, (const uint8_t *)primes);
+		mp_int64_test_prtest((uint8_t *)record, factor, exponent_limit, (const uint8_t *)primes);
 
 		if( g_term )
 		{

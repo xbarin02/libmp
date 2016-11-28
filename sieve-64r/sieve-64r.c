@@ -364,8 +364,8 @@ int random(FILE *random_file)
 static
 int random_difficulty(FILE *random_file)
 {
-	const int n0 = 8; // inclusive
-	const int n1 = 11; // exclusive
+	const int n0 = 11; // inclusive
+	const int n1 = 12; // exclusive
 
 	int n;
 	do { n = random(random_file); } while( n < 0 );
@@ -413,7 +413,7 @@ void sieve(char *record, int exponent_limit, const char *record_path, const char
 
 		int64_t factor = int64_random_prime_fast(n, random_file);
 
-		mp_int64_test_direct((uint8_t *)record, factor, exponent_limit, (const uint8_t *)primes);
+		mp_int64_test_prtest((uint8_t *)record, factor, exponent_limit, (const uint8_t *)primes);
 
 		if( g_term )
 		{
