@@ -474,7 +474,7 @@ void sieve(char *record, int exponent_limit, const char *record_path, const char
 			INT128_H64(factor), INT128_L64(factor)
 		);
 
-		mp_int128_test_direct((uint8_t *)record, factor, exponent_limit, (const uint8_t *)primes);
+		mp_int128_test_prtest((uint8_t *)record, factor, exponent_limit, (const uint8_t *)primes);
 
 		if( g_term )
 		{
