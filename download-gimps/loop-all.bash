@@ -6,7 +6,7 @@ STEP=1000
 
 set -e
 
-for ((i=$START;i<=$STOP;i+=$STEP)); do
+for ((i=$START;i<=$STOP-$STEP;i+=$STEP)); do
 	EXP_LO=$i
 	EXP_HI=$(($i+$STEP))
 	echo "Iteration ${EXP_LO} ${EXP_HI}..."
