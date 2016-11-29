@@ -6,6 +6,7 @@
 #include <inttypes.h>
 #include <string.h>
 #include <strings.h>
+#include <errno.h>
 #include <libmp.h>
 
 static
@@ -118,7 +119,8 @@ void record_save(char *record, int exponent_limit, const char *record_path)
 	FILE *record_file = fopen(record_path, "w");
 	if( NULL == record_file )
 	{
-		message(ERR "Unable to save the record :(\n");
+		int errsv = errno;
+		message(ERR "Unable to save the record :( Error: %s\n", strerror(errsv));
 		return;
 	}
 
