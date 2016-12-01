@@ -891,8 +891,8 @@ int64_t int64_dlog2_bg(int64_t p)
 		tab[2*i+1] = i;
 #else
 		{
-			int64_t *entry = hash + (BSGS_HASH_MASK&x) * 2*m;
-			int64_t *end = hash + ((BSGS_HASH_MASK&x)+1) * 2*m;
+			int64_t *entry = hash +  (BSGS_HASH_MASK&x)    * 2*m;
+			int64_t *end   = hash + ((BSGS_HASH_MASK&x)+1) * 2*m;
 			while( entry < end && *(entry+0) )
 				entry += 2;
 			assert( entry != end );
@@ -931,8 +931,8 @@ int64_t int64_dlog2_bg(int64_t p)
 #else
 		const int64_t *res = NULL;
 		{
-			int64_t *entry = hash + (BSGS_HASH_MASK&x) * 2*m;
-			int64_t *end = hash + ((BSGS_HASH_MASK&x)+1) * 2*m;
+			int64_t *entry = hash +  (BSGS_HASH_MASK&x)    * 2*m;
+			int64_t *end   = hash + ((BSGS_HASH_MASK&x)+1) * 2*m;
 			while( entry < end && *(entry+0) )
 			{
 				if( x == *(entry+0) )
@@ -946,7 +946,7 @@ int64_t int64_dlog2_bg(int64_t p)
 #endif
 		if( res )
 		{
-			return  i*m + *(res+1);
+			return i*m + *(res+1);
 		}
 
 		x *= am;
@@ -1073,6 +1073,72 @@ int128_t int128_inverse(int128_t a, int128_t n)
 }
 
 int128_t mp_int128_inverse(int128_t a, int128_t n) { return int128_inverse(a, n); }
+
+// modular division
+// x : Bx = A (mod n)
+static
+int64_t int64_divide(int64_t A, int64_t B, int64_t n)
+{
+	assert( n > INT64_0 );
+
+	if( INT64_0 == B ) { message(WARN "Division by zero!\n"); return INT64_0; }
+
+	if( INT64_0 == A % B ) return A / B; // e.g. 38x = 380  (mod 1018)
+
+	// GCD
+	int64_t g = mp_int64_gcd(B, n);
+
+	// http://math.stackexchange.com/q/395207/204448
+	if( g != INT64_1 )
+	{
+		if( g == B ) { message(WARN "No solution!\n"); return INT64_0; } // e.g. 2x = 1 (mod 4)
+
+		// A/g
+		int64_t Ag = int64_divide(A, g, n);
+
+		return int64_divide(Ag, B/g, n/g);
+	}
+
+	// inverse
+	int64_t b = mp_int64_inverse(B, n);
+
+	return A * b % n;
+}
+
+int64_t mp_int64_divide(int64_t A, int64_t B, int64_t n) { return int64_divide(A, B, n); }
+
+// modular division
+// x : Bx = A (mod n)
+static
+int128_t int128_divide(int128_t A, int128_t B, int128_t n)
+{
+	assert( n > INT128_0 );
+
+	if( INT128_0 == B ) { message(WARN "Division by zero!\n"); return INT128_0; }
+
+	if( INT128_0 == A % B ) return A / B; // e.g. 38x = 380  (mod 1018)
+
+	// GCD
+	int128_t g = mp_int128_gcd(B, n);
+
+	// http://math.stackexchange.com/q/395207/204448
+	if( g != INT128_1 )
+	{
+		if( g == B ) { message(WARN "No solution!\n"); return INT128_0; } // e.g. 2x = 1 (mod 4)
+
+		// A/g
+		int128_t Ag = int128_divide(A, g, n);
+
+		return int128_divide(Ag, B/g, n/g);
+	}
+
+	// inverse
+	int128_t b = mp_int128_inverse(B, n);
+
+	return A * b % n;
+}
+
+int128_t mp_int128_divide(int128_t A, int128_t B, int128_t n) { return int128_divide(A, B, n); }
 
 // x in [0; L) : 2^x = 1 (mod p)
 static

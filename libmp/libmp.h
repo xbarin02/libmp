@@ -54,6 +54,7 @@ void mp_int64_test_direct(uint8_t *record, int64_t factor, int exponent_limit, c
 
 int64_t mp_int64_inverse(int64_t a, int64_t n);
 int64_t mp_int64_gcd(int64_t a, int64_t b);
+int64_t mp_int64_divide(int64_t A, int64_t B, int64_t n);
 
 /** @} */
 /****************************************************************************/
@@ -101,6 +102,7 @@ void mp_int128_test_direct(uint8_t *record, int128_t factor, int exponent_limit,
 
 int128_t mp_int128_inverse(int128_t a, int128_t n);
 int128_t mp_int128_gcd(int128_t a, int128_t b);
+int128_t mp_int128_divide(int128_t A, int128_t B, int128_t n);
 
 /** @} */
 /****************************************************************************/
