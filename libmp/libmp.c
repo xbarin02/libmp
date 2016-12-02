@@ -1232,8 +1232,7 @@ int64_t int64_element2_order(int64_t p)
 
 		t = t/pe;
 
-		// FIXME: hardcoded element 2
-		int64_t a1 = int64_dpow_pl_log(2, p, t);
+		int64_t a1 = int64_dpow2_pl_log(p, t);
 
 		while( a1 != 1 )
 		{
@@ -1275,8 +1274,7 @@ int128_t int128_element2_order(int128_t p)
 
 		t = t/pe;
 
-		// FIXME: hardcoded element 2
-		int128_t a1 = int128_dpow_pl_log(2, p, t);
+		int128_t a1 = int128_dpow2_pl_log(p, t);
 
 		while( a1 != 1 )
 		{
