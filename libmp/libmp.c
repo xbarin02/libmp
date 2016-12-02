@@ -39,6 +39,16 @@ int64_t int64_dmul_int64_assert(int64_t p, int64_t a, int64_t b)
 
 // a*b (mod p)
 static
+int64_t int64_dmul_int64_auto(int64_t p, int64_t a, int64_t b)
+{
+	if( a <= INT64_MAX / b )
+		return (a * b) % p;
+	else
+		return int64_dmul_int128(p, a, b);
+}
+
+// a*b (mod p)
+static
 int128_t int128_dmul_int128_assert(int128_t p, int128_t a, int128_t b)
 {
 	assert( a <= INT128_MAX / b );
@@ -133,10 +143,10 @@ int64_t int64_dpow_pl_log(int64_t b, int64_t p, int64_t k)
 	{
 		if( INT64_1 & k )
 		{
-			m = int64_dmul_int64_assert(p, m, b);
+			m = int64_dmul_int64_auto(p, m, b);
 		}
 
-		b = int64_dmul_int64_assert(p, b, b);
+		b = int64_dmul_int64_auto(p, b, b);
 
 		k >>= 1;
 	}
