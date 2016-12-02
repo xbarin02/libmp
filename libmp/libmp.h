@@ -36,9 +36,12 @@ int64_t mp_int64_dpow2_mn_log(int64_t p, int64_t K);
 int64_t mp_int64_dpow2_pl(int64_t p, int64_t K);
 int64_t mp_int64_dpow2_pl_log(int64_t p, int64_t K);
 
+int64_t mp_int64_dpow_pl_log(int64_t b, int64_t p, int64_t k);
+
 int64_t mp_int64_dlog2_mn(int64_t p);
 int64_t mp_int64_dlog2_pl(int64_t p);
 int64_t mp_int64_dlog2_bg(int64_t p);
+int64_t mp_int64_element2_order(int64_t p);
 
 int64_t mp_int64_dlog2_mn_lim(int64_t p, int64_t L);
 int64_t mp_int64_dlog2_pl_lim(int64_t p, int64_t L);
@@ -55,6 +58,10 @@ void mp_int64_test_direct(uint8_t *record, int64_t factor, int exponent_limit, c
 int64_t mp_int64_inverse(int64_t a, int64_t n);
 int64_t mp_int64_gcd(int64_t a, int64_t b);
 int64_t mp_int64_divide(int64_t A, int64_t B, int64_t n);
+
+int64_t mp_int64_floor_log2(int64_t n);
+
+void mp_int64_factors_exponents(int64_t n, int64_t *factors, int64_t *exponents);
 
 /** @} */
 /****************************************************************************/
@@ -84,9 +91,12 @@ int128_t mp_int128_dpow2_mn_log(int128_t p, int128_t K);
 int128_t mp_int128_dpow2_pl(int128_t p, int128_t K);
 int128_t mp_int128_dpow2_pl_log(int128_t p, int128_t K);
 
+int128_t mp_int128_dpow_pl_log(int128_t b, int128_t p, int128_t k);
+
 int128_t mp_int128_dlog2_mn(int128_t p);
 int128_t mp_int128_dlog2_pl(int128_t p);
 int128_t mp_int128_dlog2_bg(int128_t p);
+int128_t mp_int128_element2_order(int128_t p);
 
 int128_t mp_int128_dlog2_mn_lim(int128_t p, int128_t L);
 int128_t mp_int128_dlog2_pl_lim(int128_t p, int128_t L);
@@ -103,6 +113,10 @@ void mp_int128_test_direct(uint8_t *record, int128_t factor, int exponent_limit,
 int128_t mp_int128_inverse(int128_t a, int128_t n);
 int128_t mp_int128_gcd(int128_t a, int128_t b);
 int128_t mp_int128_divide(int128_t A, int128_t B, int128_t n);
+
+int128_t mp_int128_floor_log2(int128_t n);
+
+void mp_int128_factors_exponents(int128_t n, int128_t *factors, int128_t *exponents);
 
 /** @} */
 /****************************************************************************/

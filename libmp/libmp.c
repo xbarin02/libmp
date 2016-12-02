@@ -120,6 +120,58 @@ int128_t int128_dpow2_pl_log(int128_t p, int128_t K)
 
 int128_t mp_int128_dpow2_pl_log(int128_t p, int128_t K) { return int128_dpow2_pl_log(p, K); }
 
+// b^(+k) (mod p)
+static
+int64_t int64_dpow_pl_log(int64_t b, int64_t p, int64_t k)
+{
+	assert( p > INT64_0 );
+	assert( k >= INT64_0 );
+
+	int64_t m = INT64_1;
+
+	while( k > INT64_0 )
+	{
+		if( INT64_1 & k )
+		{
+			m = int64_dmul_int64_assert(p, m, b);
+		}
+
+		b = int64_dmul_int64_assert(p, b, b);
+
+		k >>= 1;
+	}
+
+	return m;
+}
+
+int64_t mp_int64_dpow_pl_log(int64_t b, int64_t p, int64_t k) { return int64_dpow_pl_log(b, p, k); }
+
+// b^(+k) (mod p)
+static
+int128_t int128_dpow_pl_log(int128_t b, int128_t p, int128_t k)
+{
+	assert( p > INT128_0 );
+	assert( k >= INT128_0 );
+
+	int128_t m = INT128_1;
+
+	while( k > INT128_0 )
+	{
+		if( INT128_1 & k )
+		{
+			m = int128_dmul_int128_assert(p, m, b);
+		}
+
+		b = int128_dmul_int128_assert(p, b, b);
+
+		k >>= 1;
+	}
+
+	return m;
+}
+
+int128_t mp_int128_dpow_pl_log(int128_t b, int128_t p, int128_t k) { return int128_dpow_pl_log(b, p, k); }
+
 // 2^(+K) (mod p), O(K) complexity
 static
 int64_t int64_dpow2_pl(int64_t p, int64_t K)
@@ -957,6 +1009,208 @@ int64_t int64_dlog2_bg(int64_t p)
 }
 
 int64_t mp_int64_dlog2_bg(int64_t p) { return int64_dlog2_bg(p); }
+
+// floor(log2(n))
+// e.g. 1=>0, 2=>1, 15=>3, 16=>4
+// TODO: implement some faster method
+// https://graphics.stanford.edu/~seander/bithacks.html
+static
+int64_t int64_floor_log2(int64_t n)
+{
+	assert( n > 0 );
+#if 1
+	int64_t r = 0;
+
+	while( n >>= 1 )
+	{
+		r++;
+	}
+
+	return r;
+#endif
+}
+
+int64_t mp_int64_floor_log2(int64_t n) { return int64_floor_log2(n); }
+
+// floor(log2(n))
+// e.g. 1=>0, 2=>1, 15=>3, 16=>4
+// TODO: implement some faster method
+// https://graphics.stanford.edu/~seander/bithacks.html
+static
+int128_t int128_floor_log2(int128_t n)
+{
+	assert( n > 0 );
+#if 1
+	int128_t r = 0;
+
+	while( n >>= 1 )
+	{
+		r++;
+	}
+
+	return r;
+#endif
+}
+
+int128_t mp_int128_floor_log2(int128_t n) { return int128_floor_log2(n); }
+
+static
+void int64_factors_exponents(int64_t n, int64_t *factors, int64_t *exponents)
+{
+	assert( n > 0 );
+	assert( factors );
+	assert( exponents );
+
+	for(int64_t f = 2; n > 1; f++)
+	{
+		// new factor?
+		if( 0 == n % f )
+		{
+			*factors = f;
+			*exponents = 0;
+
+			while( 0 == n % f )
+			{
+				n /= f;
+				(*exponents)++;
+			}
+
+			factors++;
+			exponents++;
+		}
+
+		// try next factor
+	}
+
+	// terminate the list
+	*factors = 0;
+	*exponents = 0;
+}
+
+void mp_int64_factors_exponents(int64_t n, int64_t *factors, int64_t *exponents) { int64_factors_exponents(n, factors, exponents); }
+
+static
+void int128_factors_exponents(int128_t n, int128_t *factors, int128_t *exponents)
+{
+	assert( n > 0 );
+	assert( factors );
+	assert( exponents );
+
+	for(int128_t f = 2; n > 1; f++)
+	{
+		// new factor?
+		if( 0 == n % f )
+		{
+			*factors = f;
+			*exponents = 0;
+
+			while( 0 == n % f )
+			{
+				n /= f;
+				(*exponents)++;
+			}
+
+			factors++;
+			exponents++;
+		}
+
+		// try next factor
+	}
+
+	// terminate the list
+	*factors = 0;
+	*exponents = 0;
+}
+
+void mp_int128_factors_exponents(int128_t n, int128_t *factors, int128_t *exponents) { int128_factors_exponents(n, factors, exponents); }
+
+// 4.79 Algorithm Determining the order of a group element
+// from Handbook of Applied Cryptography
+static
+int64_t int64_element2_order(int64_t p)
+{
+	// NOTE: assert( p : PRIME );
+
+	// group order
+	int64_t n = p - 1;
+	// maximum number of factors
+	int64_t max_factors = int64_floor_log2(n);
+
+	// +1 due to terminating zero
+	int64_t factors[max_factors+1];
+	int64_t exponents[max_factors+1];
+
+	// n = p1^e1 * p2^e2 * ... * pk^ek
+	int64_factors_exponents(n, factors, exponents);
+
+	int64_t t = n;
+
+	// for each factor
+	for(int64_t *f = factors, *e = exponents; *f; f++, e++)
+	{
+		// FIXME: unnecessary modulo
+		int64_t pe = int64_dpow_pl_log(*f, p, *e);
+
+		t = t/pe;
+
+		// FIXME: hardcoded element 2
+		int64_t a1 = int64_dpow_pl_log(2, p, t);
+
+		while( a1 != 1 )
+		{
+			a1 = int64_dpow_pl_log(a1, p, *f);
+			t = t * *f;
+		}
+	}
+
+	return t;
+}
+
+int64_t mp_int64_element2_order(int64_t p) { return int64_element2_order(p); }
+
+// 4.79 Algorithm Determining the order of a group element
+// from Handbook of Applied Cryptography
+static
+int128_t int128_element2_order(int128_t p)
+{
+	// NOTE: assert( p : PRIME );
+
+	// group order
+	int128_t n = p - 1;
+	// maximum number of factors
+	int128_t max_factors = int128_floor_log2(n);
+
+	// +1 due to terminating zero
+	int128_t factors[max_factors+1];
+	int128_t exponents[max_factors+1];
+
+	// n = p1^e1 * p2^e2 * ... * pk^ek
+	int128_factors_exponents(n, factors, exponents);
+
+	int128_t t = n;
+
+	// for each factor
+	for(int128_t *f = factors, *e = exponents; *f; f++, e++)
+	{
+		// FIXME: unnecessary modulo
+		int128_t pe = int128_dpow_pl_log(*f, p, *e);
+
+		t = t/pe;
+
+		// FIXME: hardcoded element 2
+		int128_t a1 = int128_dpow_pl_log(2, p, t);
+
+		while( a1 != 1 )
+		{
+			a1 = int128_dpow_pl_log(a1, p, *f);
+			t = t * *f;
+		}
+	}
+
+	return t;
+}
+
+int128_t mp_int128_element2_order(int128_t p) { return int128_element2_order(p); }
 
 static
 int64_t int64_gcd(int64_t a, int64_t b)
