@@ -50,6 +50,7 @@ int main()
 			assert( r == mp_int64_dlog2_mn_lim(f, INT64_1<<62) );
 			assert( r == mp_int64_dlog2_pl_lim(f, INT64_1<<62) );
 			assert( r == mp_int64_dlog2_bg_lim(f, INT64_1<<62) );
+			assert( !mp_int64_is_prime(f) || r == mp_int64_element2_order(f) );
 
 			// 128-bit tests
 			assert( r == mp_int128_dlog2_mn(f) );
@@ -58,6 +59,7 @@ int main()
 			assert( r == mp_int128_dlog2_mn_lim(f, INT128_1<<126) );
 			assert( r == mp_int128_dlog2_pl_lim(f, INT128_1<<126) );
 			assert( r == mp_int128_dlog2_bg_lim(f, INT128_1<<126) );
+			assert( !mp_int64_is_prime(f) || r == mp_int128_element2_order(f) );
 		}
 	}
 

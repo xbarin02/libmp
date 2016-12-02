@@ -36,6 +36,17 @@ do { \
 	clock_dump(INT64_1<<bit_level); \
 } while(0)
 
+#define TEST_PRIME(func, ...) \
+do { \
+	printf("\t" #func " PRIME\n"); \
+	clock_reset(); \
+	for(int64_t f = (INT64_1<<bit_level) + 1; f < (INT64_1<<(bit_level+1)); f += 2) \
+	{ \
+		if( mp_int64_is_prime(f) ) func(__VA_ARGS__); \
+	} \
+	clock_dump(INT64_1<<bit_level); \
+} while(0)
+
 int main()
 {
 	// for each range
@@ -43,6 +54,7 @@ int main()
 	{
 		printf("testing the bit level %i...\n", bit_level);
 
+		// 64-bit tests
 		TEST(mp_int64_dlog2_mn, f);
 		TEST(mp_int64_dlog2_pl, f);
 		TEST(mp_int64_dlog2_bg, f);
@@ -50,12 +62,21 @@ int main()
 		TEST(mp_int64_dlog2_pl_lim, f, INT64_1<<62);
 		TEST(mp_int64_dlog2_bg_lim, f, INT64_1<<62);
 
+		TEST_PRIME(mp_int64_dlog2_bg, f);
+		TEST_PRIME(mp_int64_dlog2_bg_lim, f, INT64_1<<62);
+		TEST_PRIME(mp_int64_element2_order, f);
+
+		// 128-bit tests
 		TEST(mp_int128_dlog2_mn, f);
 		TEST(mp_int128_dlog2_pl, f);
 		TEST(mp_int128_dlog2_bg, f);
 		TEST(mp_int128_dlog2_mn_lim, f, INT128_1<<126);
 		TEST(mp_int128_dlog2_pl_lim, f, INT128_1<<126);
 		TEST(mp_int128_dlog2_bg_lim, f, INT128_1<<126);
+
+		TEST_PRIME(mp_int128_dlog2_bg, f);
+		TEST_PRIME(mp_int128_dlog2_bg_lim, f, INT128_1<<126);
+		TEST_PRIME(mp_int128_element2_order, f);
 	}
 
 	return 0;

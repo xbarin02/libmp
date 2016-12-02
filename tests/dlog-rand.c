@@ -54,12 +54,13 @@ int main()
 	}
 
 	// for each range
-	for(int bit_level = 0; bit_level < 64; bit_level++)
+	for(int bit_level = 1; bit_level < 64; bit_level++)
 	{
 		printf("testing the bit level %i...\n", bit_level);
 
-		// random ODD factor in [ 2^bit_level .. 2^(bit_level+1) )
-		int64_t f = ( int64_random(random_file) & ( (INT64_1<<(bit_level+1)) - INT64_1 ) ) | INT64_1;
+		// random ODD PRIME factor in [ 2^bit_level .. 2^(bit_level+1) )
+		int64_t f;
+		do { f = ( int64_random(random_file) & ( (INT64_1<<(bit_level+1)) - INT64_1 ) ) | INT64_1; } while( !mp_int64_is_prime(f) );
 
 		// debugging purposes
 		printf("\t factor = %li\n", f);
@@ -75,6 +76,7 @@ int main()
 			assert( r == mp_int64_dlog2_mn_lim(f, INT64_1<<62) );
 			assert( r == mp_int64_dlog2_pl_lim(f, INT64_1<<62) );
 			assert( r == mp_int64_dlog2_bg_lim(f, INT64_1<<62) );
+			assert( r == mp_int64_element2_order(f) );
 
 			// 128-bit tests
 			assert( r == mp_int128_dlog2_mn(f) );
@@ -83,6 +85,7 @@ int main()
 			assert( r == mp_int128_dlog2_mn_lim(f, INT128_1<<126) );
 			assert( r == mp_int128_dlog2_pl_lim(f, INT128_1<<126) );
 			assert( r == mp_int128_dlog2_bg_lim(f, INT128_1<<126) );
+			assert( r == mp_int128_element2_order(f) );
 		}
 	}
 
