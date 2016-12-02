@@ -47,6 +47,26 @@ int64_t int64_dmul_int64_auto(int64_t p, int64_t a, int64_t b)
 		return int64_dmul_int128(p, a, b);
 }
 
+// a*b
+static
+int64_t int64_mul_int64_auto(int64_t a, int64_t b)
+{
+	if( a <= INT64_MAX / b )
+		return a * b;
+	else
+		abort(); // return int64_mul_int128(a, b);
+}
+
+// a*b
+static
+int128_t int128_mul_int128_auto(int128_t a, int128_t b)
+{
+	if( a <= INT128_MAX / b )
+		return a * b;
+	else
+		abort(); // return int128_mul_int256(a, b);
+}
+
 // a*b (mod p)
 static
 int128_t int128_dmul_int128_assert(int128_t p, int128_t a, int128_t b)
@@ -181,6 +201,56 @@ int128_t int128_dpow_pl_log(int128_t b, int128_t p, int128_t k)
 }
 
 int128_t mp_int128_dpow_pl_log(int128_t b, int128_t p, int128_t k) { return int128_dpow_pl_log(b, p, k); }
+
+// b^(+k)
+static
+int64_t int64_pow_pl_log(int64_t b, int64_t k)
+{
+	assert( k >= INT64_0 );
+
+	int64_t m = INT64_1;
+
+	while( k > INT64_0 )
+	{
+		if( INT64_1 & k )
+		{
+			m = int64_mul_int64_auto(m, b);
+		}
+
+		b = int64_mul_int64_auto(b, b);
+
+		k >>= 1;
+	}
+
+	return m;
+}
+
+int64_t mp_int64_pow_pl_log(int64_t b, int64_t k) { return int64_pow_pl_log(b, k); }
+
+// b^(+k)
+static
+int128_t int128_pow_pl_log(int128_t b, int128_t k)
+{
+	assert( k >= INT128_0 );
+
+	int128_t m = INT128_1;
+
+	while( k > INT128_0 )
+	{
+		if( INT128_1 & k )
+		{
+			m = int128_mul_int128_auto(m, b);
+		}
+
+		b = int128_mul_int128_auto(b, b);
+
+		k >>= 1;
+	}
+
+	return m;
+}
+
+int128_t mp_int128_pow_pl_log(int128_t b, int128_t k) { return int128_pow_pl_log(b, k); }
 
 // 2^(+K) (mod p), O(K) complexity
 static
@@ -1079,12 +1149,12 @@ void int64_factors_exponents(int64_t n, int64_t *factors, int64_t *exponents)
 			*factors = f;
 			*exponents = 0;
 
-			while( 0 == n % f )
-			{
+			do {
 				n /= f;
 				(*exponents)++;
-			}
+			} while( 0 == n % f );
 
+			// increment pointers
 			factors++;
 			exponents++;
 		}
@@ -1114,12 +1184,12 @@ void int128_factors_exponents(int128_t n, int128_t *factors, int128_t *exponents
 			*factors = f;
 			*exponents = 0;
 
-			while( 0 == n % f )
-			{
+			do {
 				n /= f;
 				(*exponents)++;
-			}
+			} while( 0 == n % f );
 
+			// increment pointers
 			factors++;
 			exponents++;
 		}
@@ -1158,8 +1228,7 @@ int64_t int64_element2_order(int64_t p)
 	// for each factor
 	for(int64_t *f = factors, *e = exponents; *f; f++, e++)
 	{
-		// FIXME: unnecessary modulo
-		int64_t pe = int64_dpow_pl_log(*f, p, *e);
+		int64_t pe = int64_pow_pl_log(*f, *e);
 
 		t = t/pe;
 
@@ -1202,8 +1271,7 @@ int128_t int128_element2_order(int128_t p)
 	// for each factor
 	for(int128_t *f = factors, *e = exponents; *f; f++, e++)
 	{
-		// FIXME: unnecessary modulo
-		int128_t pe = int128_dpow_pl_log(*f, p, *e);
+		int128_t pe = int128_pow_pl_log(*f, *e);
 
 		t = t/pe;
 
