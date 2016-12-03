@@ -1140,7 +1140,7 @@ void int64_factors_exponents(int64_t n, int64_t *factors, int64_t *exponents)
 	assert( n > 0 );
 	assert( factors );
 	assert( exponents );
-
+#if 0
 	for(int64_t f = 2; n > 1; f++)
 	{
 		// new factor?
@@ -1161,7 +1161,45 @@ void int64_factors_exponents(int64_t n, int64_t *factors, int64_t *exponents)
 
 		// try next factor
 	}
+#endif
+#if 1
+	// 2
+	if( 0 == n % 2 )
+	{
+		*factors = 2;
+		*exponents = 0;
 
+		do {
+			n /= 2;
+			(*exponents)++;
+		} while( 0 == n % 2 );
+
+		// increment pointers
+		factors++;
+		exponents++;
+	}
+	// odd factors
+	for(int64_t f = 3; n > 1; f += 2)
+	{
+		// new factor?
+		if( 0 == n % f )
+		{
+			*factors = f;
+			*exponents = 0;
+
+			do {
+				n /= f;
+				(*exponents)++;
+			} while( 0 == n % f );
+
+			// increment pointers
+			factors++;
+			exponents++;
+		}
+
+		// try next factor
+	}
+#endif
 	// terminate the list
 	*factors = 0;
 	*exponents = 0;
@@ -1175,7 +1213,7 @@ void int128_factors_exponents(int128_t n, int128_t *factors, int128_t *exponents
 	assert( n > 0 );
 	assert( factors );
 	assert( exponents );
-
+#if 0
 	for(int128_t f = 2; n > 1; f++)
 	{
 		// new factor?
@@ -1196,7 +1234,45 @@ void int128_factors_exponents(int128_t n, int128_t *factors, int128_t *exponents
 
 		// try next factor
 	}
+#endif
+#if 1
+	// 2
+	if( 0 == n % 2 )
+	{
+		*factors = 2;
+		*exponents = 0;
 
+		do {
+			n /= 2;
+			(*exponents)++;
+		} while( 0 == n % 2 );
+
+		// increment pointers
+		factors++;
+		exponents++;
+	}
+	// odd factors
+	for(int128_t f = 3; n > 1; f += 2)
+	{
+		// new factor?
+		if( 0 == n % f )
+		{
+			*factors = f;
+			*exponents = 0;
+
+			do {
+				n /= f;
+				(*exponents)++;
+			} while( 0 == n % f );
+
+			// increment pointers
+			factors++;
+			exponents++;
+		}
+
+		// try next factor
+	}
+#endif
 	// terminate the list
 	*factors = 0;
 	*exponents = 0;
@@ -1231,6 +1307,9 @@ int64_t int64_element2_order(int64_t p)
 		int64_t pe = int64_pow_pl_log(*f, *e);
 
 		t = t/pe;
+
+		// NOTE: can the BSGS algorithm be used? base .. a1 = 2^t (mod p), step .. a1 = a1^pi (mod p)
+		// NOTE: probably not, because the loop iterates 0, 1, 2, or 3 times (too small number of iterations)
 
 		int64_t a1 = int64_dpow2_pl_log(p, t);
 
