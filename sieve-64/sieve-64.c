@@ -224,30 +224,6 @@ char *gen_prime_table(int exponent_limit)
 	return primes;
 }
 
-int int64_is_prime(int64_t p)
-{
-	assert( p >= INT64_0 );
-
-	if( p < INT64_C(2) )
-		return 0;
-
-	if( p == INT64_C(2) )
-		// prime
-		return 1;
-
-	const int64_t sqrt_p = int64_ceil_sqrt(p);
-
-	for(int64_t factor = INT64_C(2); factor <= sqrt_p; factor++)
-	{
-		if( p % factor == INT64_0 )
-			// composite
-			return 0;
-	}
-
-	// prime
-	return 1;
-}
-
 void test(char *record, int64_t factor, int exponent_limit, const char *primes)
 {
 	if( INT64_0 == (factor & (factor+INT64_1)) )
@@ -256,7 +232,7 @@ void test(char *record, int64_t factor, int exponent_limit, const char *primes)
 		return;
 	}
 
-	if( !int64_is_prime(factor) )
+	if( !mp_int64_is_prime_wheel6(factor) )
 	{
 		// not a prime factor, skip them
 		return;

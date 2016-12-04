@@ -2139,7 +2139,7 @@ void int64_test_prtest(uint8_t *record, int64_t factor, int exponent_limit, cons
 	}
 
 	// not a prime factor, skip them
-	if( !int64_is_prime(factor) )
+	if( !int64_is_prime_wheel6(factor) )
 	{
 		return;
 	}
@@ -2175,7 +2175,7 @@ void int128_test_prtest(uint8_t *record, int128_t factor, int exponent_limit, co
 	}
 
 	// not a prime factor, skip them
-	if( !int128_is_prime(factor) )
+	if( !int128_is_prime_wheel6(factor) )
 	{
 		return;
 	}
