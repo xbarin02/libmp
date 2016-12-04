@@ -1198,7 +1198,7 @@ void int64_factors_exponents(int64_t n, int64_t *factors, int64_t *exponents)
 		// try next factor
 	}
 #endif
-#if 1
+#if 0
 	// 2
 	if( 0 == n % 2 )
 	{
@@ -1236,6 +1236,85 @@ void int64_factors_exponents(int64_t n, int64_t *factors, int64_t *exponents)
 		// try next factor
 	}
 #endif
+#if 1
+	// 2
+	if( n > 1 && 0 == n % 2 )
+	{
+		*factors = 2;
+		*exponents = 0;
+
+		do {
+			n /= 2;
+			(*exponents)++;
+		} while( 0 == n % 2 );
+
+		// increment pointers
+		factors++;
+		exponents++;
+	}
+	// 3
+	if( n > 1 && 0 == n % 3 )
+	{
+		*factors = 3;
+		*exponents = 0;
+
+		do {
+			n /= 3;
+			(*exponents)++;
+		} while( 0 == n % 3 );
+
+		// increment pointers
+		factors++;
+		exponents++;
+	}
+	// 5
+	if( n > 1 && 0 == n % 5 )
+	{
+		*factors = 5;
+		*exponents = 0;
+
+		do {
+			n /= 5;
+			(*exponents)++;
+		} while( 0 == n % 5 );
+
+		// increment pointers
+		factors++;
+		exponents++;
+	}
+	// 6i+{1,5}
+	for(int64_t i = 1; n > 1; i++)
+	{
+		if( 0 == n % (6*i+1) )
+		{
+			*factors = (6*i+1);
+			*exponents = 0;
+
+			do {
+				n /= (6*i+1);
+				(*exponents)++;
+			} while( 0 == n % (6*i+1) );
+
+			// increment pointers
+			factors++;
+			exponents++;
+		}
+		if( 0 == n % (6*i+5) )
+		{
+			*factors = (6*i+5);
+			*exponents = 0;
+
+			do {
+				n /= (6*i+5);
+				(*exponents)++;
+			} while( 0 == n % (6*i+5) );
+
+			// increment pointers
+			factors++;
+			exponents++;
+		}
+	}
+#endif
 	// terminate the list
 	*factors = 0;
 	*exponents = 0;
@@ -1271,7 +1350,7 @@ void int128_factors_exponents(int128_t n, int128_t *factors, int128_t *exponents
 		// try next factor
 	}
 #endif
-#if 1
+#if 0
 	// 2
 	if( 0 == n % 2 )
 	{
@@ -1307,6 +1386,85 @@ void int128_factors_exponents(int128_t n, int128_t *factors, int128_t *exponents
 		}
 
 		// try next factor
+	}
+#endif
+#if 1
+	// 2
+	if( n > 1 && 0 == n % 2 )
+	{
+		*factors = 2;
+		*exponents = 0;
+
+		do {
+			n /= 2;
+			(*exponents)++;
+		} while( 0 == n % 2 );
+
+		// increment pointers
+		factors++;
+		exponents++;
+	}
+	// 3
+	if( n > 1 && 0 == n % 3 )
+	{
+		*factors = 3;
+		*exponents = 0;
+
+		do {
+			n /= 3;
+			(*exponents)++;
+		} while( 0 == n % 3 );
+
+		// increment pointers
+		factors++;
+		exponents++;
+	}
+	// 5
+	if( n > 1 && 0 == n % 5 )
+	{
+		*factors = 5;
+		*exponents = 0;
+
+		do {
+			n /= 5;
+			(*exponents)++;
+		} while( 0 == n % 5 );
+
+		// increment pointers
+		factors++;
+		exponents++;
+	}
+	// 6i+{1,5}
+	for(int128_t i = 1; n > 1; i++)
+	{
+		if( 0 == n % (6*i+1) )
+		{
+			*factors = (6*i+1);
+			*exponents = 0;
+
+			do {
+				n /= (6*i+1);
+				(*exponents)++;
+			} while( 0 == n % (6*i+1) );
+
+			// increment pointers
+			factors++;
+			exponents++;
+		}
+		if( 0 == n % (6*i+5) )
+		{
+			*factors = (6*i+5);
+			*exponents = 0;
+
+			do {
+				n /= (6*i+5);
+				(*exponents)++;
+			} while( 0 == n % (6*i+5) );
+
+			// increment pointers
+			factors++;
+			exponents++;
+		}
 	}
 #endif
 	// terminate the list
