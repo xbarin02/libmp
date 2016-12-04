@@ -44,8 +44,10 @@ int main()
 		printf("testing the bit level %i...\n", bit_level);
 
 		TEST(mp_int64_is_prime);
+		TEST(mp_int64_is_prime_wheel6);
 
 		TEST(mp_int128_is_prime);
+		TEST(mp_int128_is_prime_wheel6);
 	}
 
 	return 0;

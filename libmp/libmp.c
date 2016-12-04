@@ -700,6 +700,42 @@ int128_t int128_ceil_sqrt(int128_t n)
 
 int128_t mp_int128_ceil_sqrt(int128_t n) { return int128_ceil_sqrt(n); }
 
+static
+int64_t int64_floor_sqrt(int64_t n)
+{
+	assert( n > INT64_0 );
+
+	int64_t x = n;
+	int64_t y = INT64_0;
+
+	do {
+		y = x;
+		x = (x + n/x) >> 1;
+	} while (x < y);
+
+	return y;
+}
+
+int64_t mp_int64_floor_sqrt(int64_t n) { return int64_floor_sqrt(n); }
+
+static
+int128_t int128_floor_sqrt(int128_t n)
+{
+	assert( n > INT128_0 );
+
+	int128_t x = n;
+	int128_t y = INT128_0;
+
+	do {
+		y = x;
+		x = (x + n/x) >> 1;
+	} while (x < y);
+
+	return y;
+}
+
+int128_t mp_int128_floor_sqrt(int128_t n) { return int128_floor_sqrt(n); }
+
 // http://stackoverflow.com/questions/2745074/fast-ceiling-of-an-integer-division-in-c-c
 static
 int64_t int64_ceil_div(int64_t a, int64_t b)
@@ -1696,7 +1732,7 @@ int int64_is_prime(int64_t p)
 	if( ~p & INT64_1 )
 		return 0;
 
-	const int64_t sqrt_p = int64_ceil_sqrt(p);
+	const int64_t sqrt_p = int64_floor_sqrt(p);
 
 	// 3, 5, 7, 9, 11, ...
 	for(int64_t factor = INT64_C(3); factor <= sqrt_p; factor += INT64_2)
@@ -1728,7 +1764,7 @@ int int128_is_prime(int128_t p)
 	if( ~p & INT128_1 )
 		return 0;
 
-	const int128_t sqrt_p = int128_ceil_sqrt(p);
+	const int128_t sqrt_p = int128_floor_sqrt(p);
 
 	// 3, 5, 7, 9, 11, ...
 	for(int128_t factor = INT128_C(3); factor <= sqrt_p; factor += INT128_2)
@@ -1741,6 +1777,86 @@ int int128_is_prime(int128_t p)
 }
 
 int mp_int128_is_prime(int128_t p) { return int128_is_prime(p); }
+
+static
+int int64_is_prime_wheel6(int64_t p)
+{
+	assert( p >= INT64_0 );
+
+	if( p < 2 )
+		return 0;
+
+	if( 2 == p )
+		return 1;
+	if( ~p & 1 ) // 0 == p % 2
+		return 0;
+
+	if( 3 == p )
+		return 1;
+	if( 0 == p % 3 )
+		return 0;
+
+	const int64_t sqrt_p = int64_floor_sqrt(p);
+
+	// iteration 0
+	if( 5 == p )
+		return 1;
+	if( 0 == p % 5 )
+		return 0;
+
+	// iteration from 1...
+	for(int64_t i = 1; 6*i+1 <= sqrt_p; i++)
+	{
+		if( 0 == p % (6*i+1) )
+			return 0;
+		if( 0 == p % (6*i+5) )
+			return 0;
+	}
+
+	return 1;
+}
+
+int mp_int64_is_prime_wheel6(int64_t p) { return int64_is_prime_wheel6(p); }
+
+static
+int int128_is_prime_wheel6(int128_t p)
+{
+	assert( p >= INT128_0 );
+
+	if( p < 2 )
+		return 0;
+
+	if( 2 == p )
+		return 1;
+	if( ~p & 1 ) // 0 == p % 2
+		return 0;
+
+	if( 3 == p )
+		return 1;
+	if( 0 == p % 3 )
+		return 0;
+
+	const int128_t sqrt_p = int128_floor_sqrt(p);
+
+	// iteration 0
+	if( 5 == p )
+		return 1;
+	if( 0 == p % 5 )
+		return 0;
+
+	// iteration from 1...
+	for(int128_t i = 1; 6*i+1 <= sqrt_p; i++)
+	{
+		if( 0 == p % (6*i+1) )
+			return 0;
+		if( 0 == p % (6*i+5) )
+			return 0;
+	}
+
+	return 1;
+}
+
+int mp_int128_is_prime_wheel6(int128_t p) { return int128_is_prime_wheel6(p); }
 
 int message(const char *format, ...)
 {

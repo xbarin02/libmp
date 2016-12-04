@@ -56,10 +56,10 @@ int main()
 		{
 			const int r = is_prime(f);
 
-			// TEST: mp_int64_is_prime
 			assert( r == mp_int64_is_prime(f) );
-			// TEST: mp_int128_is_prime
+			assert( r == mp_int64_is_prime_wheel6(f) );
 			assert( r == mp_int128_is_prime(f) );
+			assert( r == mp_int128_is_prime_wheel6(f) );
 		}
 	}
 
