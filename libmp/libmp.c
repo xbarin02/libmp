@@ -2016,6 +2016,68 @@ int int128_is_prime_wheel6(int128_t p)
 
 int mp_int128_is_prime_wheel6(int128_t p) { return int128_is_prime_wheel6(p); }
 
+static
+int int64_is_prime_wheel30(int64_t p)
+{
+	assert( p >= INT64_0 );
+
+	if( 0 == p ) return 0;
+	if( 1 == p ) return 0;
+
+	const int64_t sqrt_p = int64_floor_sqrt(p);
+
+	if( 2 <= sqrt_p && 0 == p % 2 ) return 0;
+	if( 3 <= sqrt_p && 0 == p % 3 ) return 0;
+	if( 5 <= sqrt_p && 0 == p % 5 ) return 0;
+
+	for(int64_t i = 0; 30*i+1 <= sqrt_p; i++)
+	{
+		if( i > 0 && (30*i+ 1) <= sqrt_p && 0 == p % (30*i+ 1) ) return 0;
+		if(          (30*i+ 7) <= sqrt_p && 0 == p % (30*i+ 7) ) return 0;
+		if(          (30*i+11) <= sqrt_p && 0 == p % (30*i+11) ) return 0;
+		if(          (30*i+13) <= sqrt_p && 0 == p % (30*i+13) ) return 0;
+		if(          (30*i+17) <= sqrt_p && 0 == p % (30*i+17) ) return 0;
+		if(          (30*i+19) <= sqrt_p && 0 == p % (30*i+19) ) return 0;
+		if(          (30*i+23) <= sqrt_p && 0 == p % (30*i+23) ) return 0;
+		if(          (30*i+29) <= sqrt_p && 0 == p % (30*i+29) ) return 0;
+	}
+
+	return 1;
+}
+
+int mp_int64_is_prime_wheel30(int64_t p) { return int64_is_prime_wheel30(p); }
+
+static
+int int128_is_prime_wheel30(int128_t p)
+{
+	assert( p >= INT128_0 );
+
+	if( 0 == p ) return 0;
+	if( 1 == p ) return 0;
+
+	const int128_t sqrt_p = int128_floor_sqrt(p);
+
+	if( 2 <= sqrt_p && 0 == p % 2 ) return 0;
+	if( 3 <= sqrt_p && 0 == p % 3 ) return 0;
+	if( 5 <= sqrt_p && 0 == p % 5 ) return 0;
+
+	for(int128_t i = 0; 30*i+1 <= sqrt_p; i++)
+	{
+		if( i > 0 && (30*i+ 1) <= sqrt_p && 0 == p % (30*i+ 1) ) return 0;
+		if(          (30*i+ 7) <= sqrt_p && 0 == p % (30*i+ 7) ) return 0;
+		if(          (30*i+11) <= sqrt_p && 0 == p % (30*i+11) ) return 0;
+		if(          (30*i+13) <= sqrt_p && 0 == p % (30*i+13) ) return 0;
+		if(          (30*i+17) <= sqrt_p && 0 == p % (30*i+17) ) return 0;
+		if(          (30*i+19) <= sqrt_p && 0 == p % (30*i+19) ) return 0;
+		if(          (30*i+23) <= sqrt_p && 0 == p % (30*i+23) ) return 0;
+		if(          (30*i+29) <= sqrt_p && 0 == p % (30*i+29) ) return 0;
+	}
+
+	return 1;
+}
+
+int mp_int128_is_prime_wheel30(int128_t p) { return int128_is_prime_wheel30(p); }
+
 int message(const char *format, ...)
 {
 	va_list ap;

@@ -45,9 +45,11 @@ int main()
 
 		TEST(mp_int64_is_prime);
 		TEST(mp_int64_is_prime_wheel6);
+		TEST(mp_int64_is_prime_wheel30);
 
 		TEST(mp_int128_is_prime);
 		TEST(mp_int128_is_prime_wheel6);
+		TEST(mp_int128_is_prime_wheel30);
 	}
 
 	return 0;

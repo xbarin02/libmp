@@ -53,6 +53,7 @@ int64_t mp_int64_ceil_div(int64_t a, int64_t b);
 
 int mp_int64_is_prime(int64_t p);
 int mp_int64_is_prime_wheel6(int64_t p);
+int mp_int64_is_prime_wheel30(int64_t p);
 
 void mp_int64_test_prtest(uint8_t *record, int64_t factor, int exponent_limit, const uint8_t *primes);
 void mp_int64_test_direct(uint8_t *record, int64_t factor, int exponent_limit, const uint8_t *primes);
@@ -110,6 +111,7 @@ int128_t mp_int128_ceil_div(int128_t a, int128_t b);
 
 int mp_int128_is_prime(int128_t p);
 int mp_int128_is_prime_wheel6(int128_t p);
+int mp_int128_is_prime_wheel30(int128_t p);
 
 void mp_int128_test_prtest(uint8_t *record, int128_t factor, int exponent_limit, const uint8_t *primes);
 void mp_int128_test_direct(uint8_t *record, int128_t factor, int exponent_limit, const uint8_t *primes);

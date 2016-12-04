@@ -58,8 +58,10 @@ int main()
 
 			assert( r == mp_int64_is_prime(f) );
 			assert( r == mp_int64_is_prime_wheel6(f) );
+			assert( r == mp_int64_is_prime_wheel30(f) );
 			assert( r == mp_int128_is_prime(f) );
 			assert( r == mp_int128_is_prime_wheel6(f) );
+			assert( r == mp_int128_is_prime_wheel30(f) );
 		}
 	}
 
