@@ -1493,6 +1493,7 @@ int64_t int64_extract_factor(int64_t p, int64_t n, int64_t pi, int64_t *t)
 			if( a1 != 1 ) return 0; // early termination
 			*t = pi; // *t *= pi;
 			n *= pi;
+			if( 1 == int64_dpow2_pl_log(p, n) ) return pi; // shortcut
 		}
 	}
 
