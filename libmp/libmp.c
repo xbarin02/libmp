@@ -1474,11 +1474,40 @@ void int128_factors_exponents(int128_t n, int128_t *factors, int128_t *exponents
 
 void mp_int128_factors_exponents(int128_t n, int128_t *factors, int128_t *exponents) { int128_factors_exponents(n, factors, exponents); }
 
+static
+int64_t int64_extract_factor(int64_t p, int64_t n, int64_t pi, int64_t *tn, int64_t *t1)
+{
+	int64_t ei = 0;
+
+	if( n > 1 && pi > 1 && 0 == n % pi )
+	{
+		do {
+			n /= pi;
+			ei++;
+		} while( 0 == n % pi );
+
+		// found a factor pi^ei
+		int64_t pe = int64_pow_pl_log(pi, ei);
+		*tn /= pe;
+		int64_t a1 = int64_dpow2_pl_log(p, *tn);
+		while( a1 != 1 )
+		{
+			a1 = int64_dpow_pl_log(a1, p, pi);
+			if( *t1 != 1 ) return 0; // early termination
+			*t1 *= pi;
+			*tn *= pi;
+		}
+	}
+
+	return n;
+}
+
 // 4.79 Algorithm Determining the order of a group element
 // from Handbook of Applied Cryptography
 static
 int64_t int64_element2_order(int64_t p)
 {
+#if 0
 	// NOTE: assert( p : PRIME );
 
 	// group order
@@ -1515,6 +1544,24 @@ int64_t int64_element2_order(int64_t p)
 	}
 
 	return t;
+#endif
+#if 1
+	int64_t n = p - 1;
+
+	int64_t tn = n;
+	int64_t t1 = 1;
+
+	n = int64_extract_factor(p, n, 2, &tn, &t1);
+	n = int64_extract_factor(p, n, 3, &tn, &t1);
+
+	for(int64_t i = 0; n > 1; i++)
+	{
+		n = int64_extract_factor(p, n, 6*i+ 1, &tn, &t1);
+		n = int64_extract_factor(p, n, 6*i+ 5, &tn, &t1);
+	}
+
+	return n ? t1 : 0;
+#endif
 }
 
 int64_t mp_int64_element2_order(int64_t p) { return int64_element2_order(p); }
