@@ -1486,14 +1486,20 @@ int64_t int64_extract_factor(int64_t p, int64_t n, int64_t pi, int64_t *t)
 		// found a factor pi^ei
 		int64_t a1 = int64_dpow2_pl_log(p, n);
 
-		if( a1 != 1 ) // while
+		if( a1 != 1 )
 		{
-			if( *t != 1 ) return 0; // early termination
-			a1 = int64_dpow_pl_log(a1, p, pi);
-			if( a1 != 1 ) return 0; // early termination
-			*t = pi; // *t *= pi;
-			n *= pi;
-			// NOTE: 1 == int64_dpow2_pl_log(p, n)
+			int64_t b = int64_dpow2_pl_log(p, pi);
+
+			if( b == 1 )
+			{
+				*t = pi;
+				return 0; // terminate
+			}
+			else
+			{
+				*t = 0;
+				return 0; // terminate
+			}
 		}
 	}
 
@@ -1557,7 +1563,7 @@ int64_t int64_element2_order(int64_t p)
 		n = int64_extract_factor(p, n, 6*i+5, &t);
 	}
 
-	return n ? t : 0;
+	return t;
 #endif
 }
 
