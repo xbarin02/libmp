@@ -1477,13 +1477,10 @@ void mp_int128_factors_exponents(int128_t n, int128_t *factors, int128_t *expone
 static
 int64_t int64_extract_factor(int64_t p, int64_t n, int64_t pi, int64_t *t)
 {
-	int64_t ei = 0;
-
 	if( n > 1 && pi > 1 && 0 == n % pi )
 	{
 		do {
 			n /= pi;
-			ei++;
 		} while( 0 == n % pi );
 
 		// found a factor pi^ei
