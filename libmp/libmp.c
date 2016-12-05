@@ -1475,7 +1475,7 @@ void int128_factors_exponents(int128_t n, int128_t *factors, int128_t *exponents
 void mp_int128_factors_exponents(int128_t n, int128_t *factors, int128_t *exponents) { int128_factors_exponents(n, factors, exponents); }
 
 static
-int64_t int64_extract_factor(int64_t p, int64_t n, int64_t pi, int64_t *tn, int64_t *t1)
+int64_t int64_extract_factor(int64_t p, int64_t n, int64_t pi, int64_t *t)
 {
 	int64_t ei = 0;
 
@@ -1487,15 +1487,13 @@ int64_t int64_extract_factor(int64_t p, int64_t n, int64_t pi, int64_t *tn, int6
 		} while( 0 == n % pi );
 
 		// found a factor pi^ei
-		int64_t pe = int64_pow_pl_log(pi, ei);
-		*tn /= pe;
-		int64_t a1 = int64_dpow2_pl_log(p, *tn);
+		int64_t a1 = int64_dpow2_pl_log(p, n);
 		while( a1 != 1 )
 		{
+			if( *t != 1 ) return 0; // early termination
 			a1 = int64_dpow_pl_log(a1, p, pi);
-			if( *t1 != 1 ) return 0; // early termination
-			*t1 *= pi;
-			*tn *= pi;
+			*t *= pi;
+			n *= pi;
 		}
 	}
 
@@ -1548,19 +1546,18 @@ int64_t int64_element2_order(int64_t p)
 #if 1
 	int64_t n = p - 1;
 
-	int64_t tn = n;
-	int64_t t1 = 1;
+	int64_t t = 1;
 
-	n = int64_extract_factor(p, n, 2, &tn, &t1);
-	n = int64_extract_factor(p, n, 3, &tn, &t1);
+	n = int64_extract_factor(p, n, 2, &t);
+	n = int64_extract_factor(p, n, 3, &t);
 
-	for(int64_t i = 0; n > 1; i++)
+	for(int64_t i = 0; n > t; i++)
 	{
-		n = int64_extract_factor(p, n, 6*i+ 1, &tn, &t1);
-		n = int64_extract_factor(p, n, 6*i+ 5, &tn, &t1);
+		n = int64_extract_factor(p, n, 6*i+1, &t);
+		n = int64_extract_factor(p, n, 6*i+5, &t);
 	}
 
-	return n ? t1 : 0;
+	return n ? t : 0;
 #endif
 }
 
