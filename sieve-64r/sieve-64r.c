@@ -71,12 +71,6 @@ int ceil_sqrt(int n)
 }
 
 static
-void set_bit(char *ptr, int i)
-{
-	ptr[i/8] |= 1 << i%8;
-}
-
-static
 int get_bit(const char *ptr, int i)
 {
 	return ptr[i/8] & 1 << i%8;
@@ -109,100 +103,6 @@ int is_prime(int p, const char *primes)
 #else
 	return !get_bit(primes, p);
 #endif
-}
-
-char *load_prime_table(int exponent_limit)
-{
-	// check if file exists
-	FILE *file = fopen("primes.bits", "r");
-
-	if( NULL == file )
-	{
-		message(WARN "Cannot load precomputed table of primes.\n");
-		return NULL;
-	}
-
-	// check if file size corresponds to exponent_limit
-	fseek(file, 0L, SEEK_END);
-	int detected_exponent_limit = (int)ftell(file)*8;
-	rewind(file);
-
-	if( exponent_limit > detected_exponent_limit )
-	{
-		message(WARN "Prime table of insufficient length.\n");
-		fclose(file);
-		return NULL;
-	}
-
-	// malloc
-	char *primes = malloc( (exponent_limit+7)/8 );
-
-	// read the content
-	if( (size_t)(exponent_limit+7)/8 != fread(primes, (size_t)1, (size_t)(exponent_limit+7)/8, file) )
-	{
-		message(ERR "Unable to read precomputed prime table.\n");
-		free(primes);
-		fclose(file);
-		return NULL;
-	}
-
-	fclose(file);
-
-	message("Precomputed table of primes was successfully loaded :)\n");
-
-	return primes;
-}
-
-void save_prime_table(const char *primes, int exponent_limit)
-{
-	FILE *file = fopen("primes.bits", "w");
-
-	if( NULL == file )
-	{
-		message(ERR "Cannot save precomputed table of primes.\n");
-	}
-
-	if( (size_t)(exponent_limit+7)/8 != fwrite(primes, (size_t)1, (size_t)(exponent_limit+7)/8, file) )
-	{
-		message(ERR "Unable to write precomputed prime table.\n");
-	}
-
-	fclose(file);
-}
-
-// Sieve of Eratosthenes
-char *gen_prime_table(int exponent_limit)
-{
-	message("Creating prime table...\n");
-
-	char *primes = malloc( (exponent_limit+7)/8 );
-
-	if( NULL == primes )
-	{
-		message(ERR "Unable to allocate memory.\n");
-		exit(0);
-	}
-
-	// initially: 0 = prime, 1 = composite
-	bzero(primes, (exponent_limit+7)/8);
-
-	set_bit(primes, 0);
-	set_bit(primes, 1);
-
-	for(int i = 2; i <= ceil_sqrt(exponent_limit); i++)
-	{
-		if( !get_bit(primes, i) )
-		{
-			for(int j = i*i; j < exponent_limit; j += i)
-			{
-				set_bit(primes, j);
-			}
-		}
-	}
-
-	message("The prime table was created.\n");
-
-	return primes;
 }
 
 void summary(const char *record, int exponent_limit, const char *primes)
@@ -585,11 +485,11 @@ int main(int argc, char *argv[])
 	char *record = record_load(&exponent_limit, record_path);
 
 	// create prime table
-	char *primes = load_prime_table(exponent_limit);
+	char *primes = (char *)load_prime_table(exponent_limit);
 	if( NULL == primes )
 	{
-		primes = gen_prime_table(exponent_limit);
-		save_prime_table(primes, exponent_limit);
+		primes = (char *)gen_prime_table(exponent_limit);
+		save_prime_table((uint8_t *)primes, exponent_limit);
 	}
 
 	FILE *random_file = fopen("/dev/urandom", "r");

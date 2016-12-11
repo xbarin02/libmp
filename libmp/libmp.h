@@ -12,12 +12,19 @@
 
 int message(const char *format, ...);
 
+uint8_t *load_prime_table(int exponent_limit);
+uint8_t *gen_prime_table(int exponent_limit);
+void save_prime_table(const uint8_t *primes, int exponent_limit);
+
 /****************************************************************************/
 /** @defgroup int int
  * @{
  */
 
+int mp_int_ceil_sqrt(int n);
+
 int mp_int_is_prime_cached(int p, const uint8_t *primes);
+int mp_int_next_prime_cached(int p, const uint8_t *primes, int exponent_limit);
 
 /** @} */
 /****************************************************************************/
@@ -42,6 +49,7 @@ int64_t mp_int64_dlog2_mn(int64_t p);
 int64_t mp_int64_dlog2_pl(int64_t p);
 int64_t mp_int64_dlog2_bg(int64_t p);
 int64_t mp_int64_element2_order(int64_t p);
+int64_t mp_int64_element2_order_prtable(int64_t p, const uint8_t *primes, int exponent_limit);
 
 int64_t mp_int64_dlog2_mn_lim(int64_t p, int64_t L);
 int64_t mp_int64_dlog2_pl_lim(int64_t p, int64_t L);
@@ -54,6 +62,8 @@ int64_t mp_int64_ceil_div(int64_t a, int64_t b);
 int mp_int64_is_prime(int64_t p);
 int mp_int64_is_prime_wheel6(int64_t p);
 int mp_int64_is_prime_wheel30(int64_t p);
+
+int64_t mp_int64_next_prime_cached(int64_t p, const uint8_t *primes, int exponent_limit);
 
 void mp_int64_test_prtest(uint8_t *record, int64_t factor, int exponent_limit, const uint8_t *primes);
 void mp_int64_test_direct(uint8_t *record, int64_t factor, int exponent_limit, const uint8_t *primes);

@@ -12,14 +12,60 @@
 #include <inttypes.h>
 #include <strings.h>
 
+// use a^(+m) rather than a^(-m) in baby-step giant-step algorithm
+// #define BSGS_INVERSE
+
 static
 void __attribute__ ((constructor)) init()
 {
 	message("libmp loaded\n");
 }
 
-// use a^(+m) rather than a^(-m) in baby-step giant-step algorithm
-// #define BSGS_INVERSE
+static
+void set_bit(uint8_t *ptr, int i)
+{
+	ptr[i/8] |= (uint8_t)( 1 << i%8 );
+}
+
+static
+int get_bit(const uint8_t *ptr, int i)
+{
+	return ptr[i/8] & 1 << i%8;
+}
+
+static
+int int_next_prime_cached(int p, const uint8_t *primes, int exponent_limit)
+{
+	assert( p >= 0 );
+
+	do {
+		p++;
+	} while( p < exponent_limit && get_bit(primes, p) );
+
+	if( p < exponent_limit )
+		return p;
+
+	return 0;
+}
+
+int mp_int_next_prime_cached(int p, const uint8_t *primes, int exponent_limit) { return int_next_prime_cached(p, primes, exponent_limit); }
+
+static
+int64_t int64_next_prime_cached(int64_t p, const uint8_t *primes, int exponent_limit)
+{
+	assert( p >= INT64_0 );
+
+	do {
+		p++;
+	} while( p < (int64_t)exponent_limit && get_bit(primes, (int)p) );
+
+	if( p < (int64_t)exponent_limit )
+		return p;
+
+	return INT64_0;
+}
+
+int64_t mp_int64_next_prime_cached(int64_t p, const uint8_t *primes, int exponent_limit) { return int64_next_prime_cached(p, primes, exponent_limit); }
 
 // a*b (mod p)
 static
@@ -95,6 +141,8 @@ int64_t int64_dpow2_pl_log(int64_t p, int64_t K)
 
 		b = int64_dmul_int64_assert(p, b, b);
 
+		// if( INT64_1 == b ) return m;
+
 		K >>= 1;
 	}
 
@@ -118,6 +166,106 @@ int64_t int64_dpow2_pl_log(int64_t p, int64_t K)
 
 	return m;
 #endif
+}
+
+// K : maximal n
+static
+void int64_dpow2_pl_log_cached_init(int64_t p, int64_t *powers, int64_t K)
+{
+	int64_t b = INT64_2;
+
+	for(size_t i = 0; K > INT64_0; i++)
+	{
+		powers[i] = b;
+
+		b = int64_dmul_int64_assert(p, b, b);
+
+		K >>= 1;
+	}
+}
+
+// powers[64] = { 2^1, 2^2, 2^4, 2^16, ... } (mod p)
+static
+int64_t int64_dpow2_pl_log_cached(int64_t p, const int64_t *powers, int64_t K)
+{
+	assert( p > INT64_0 );
+	assert( K >= INT64_0 );
+
+	int64_t m = INT64_1;
+
+	for(size_t i = 0; K > INT64_0; i++)
+	{
+		if( INT64_1 & K )
+		{
+			m = int64_dmul_int64_assert(p, m, powers[i]);
+		}
+
+		K >>= 1;
+	}
+
+	return m;
+}
+
+// +1 : 2^K1 == 1 (mod p)
+//  0 : otherwise
+// -1 : 2^K2 != 1 (mod p)
+static
+int64_t int64_dpow2_pl_log_dual(int64_t p, int64_t K1, int64_t K2)
+{
+	assert( p > INT64_0 );
+	assert( K1 >= INT64_0 );
+	assert( K2 >= INT64_0 );
+
+	int64_t m1 = INT64_1;
+	int64_t m2 = INT64_1;
+	int64_t b = INT64_2;
+
+	for(size_t i = 0; K1 > INT64_0 || K2 > INT64_0; i++)
+	{
+		if( INT64_1 & K1 ) m1 = int64_dmul_int64_assert(p, m1, b);
+		if( INT64_1 & K2 ) m2 = int64_dmul_int64_assert(p, m2, b);
+
+		b = int64_dmul_int64_assert(p, b, b);
+
+		K1 >>= 1;
+		K2 >>= 1;
+	}
+
+	if( INT64_1 == m1 )
+		return +1;
+	if( INT64_1 != m2 )
+		return -1;
+	return 0;
+}
+
+// +1 : 2^K1 == 1 (mod p)
+//  0 : otherwise
+// -1 : 2^K2 != 1 (mod p)
+static
+int64_t int64_dpow2_pl_log_dual_cached(int64_t p, const int64_t *powers,
+	int64_t K1, int64_t K2)
+{
+	assert( p > INT64_0 );
+	assert( K1 >= INT64_0 );
+	assert( K2 >= INT64_0 );
+
+	int64_t m1 = INT64_1;
+	int64_t m2 = INT64_1;
+
+	for(size_t i = 0; K1 > INT64_0 || K2 > INT64_0; i++)
+	{
+		if( INT64_1 & K1 ) m1 = int64_dmul_int64_assert(p, m1, powers[i]);
+		if( INT64_1 & K2 ) m2 = int64_dmul_int64_assert(p, m2, powers[i]);
+
+		K1 >>= 1;
+		K2 >>= 1;
+	}
+
+	if( INT64_1 == m1 )
+		return +1;
+	if( INT64_1 != m2 )
+		return -1;
+	return 0;
 }
 
 int64_t mp_int64_dpow2_pl_log(int64_t p, int64_t K) { return int64_dpow2_pl_log(p, K); }
@@ -661,6 +809,25 @@ int128_t int128_dlog2_pl_lim(int128_t p, int128_t L)
 }
 
 int128_t mp_int128_dlog2_pl_lim(int128_t p, int128_t L) { return int128_dlog2_pl_lim(p, L); }
+
+static
+int int_ceil_sqrt(int n)
+{
+	assert( n > 0 );
+
+	int x = n;
+	int y = 0;
+
+	while(x != y)
+	{
+		y = x;
+		x = (x + (n + x - 1)/x + 1) >> 1;
+	}
+
+	return x;
+}
+
+int mp_int_ceil_sqrt(int n) { return int_ceil_sqrt(n); }
 
 static
 int64_t int64_ceil_sqrt(int64_t n)
@@ -1502,7 +1669,8 @@ int64_t int64_extract_factor(int64_t p, int64_t n, int64_t pi, int64_t *t)
 				return 0; // terminate
 			}
 		}
-#else
+#endif
+#if 0
 		int64_t b = int64_dpow2_pl_log(p, pi);
 
 		if( b == 1 )
@@ -1521,9 +1689,178 @@ int64_t int64_extract_factor(int64_t p, int64_t n, int64_t pi, int64_t *t)
 			}
 		}
 #endif
+#if 1
+		int64_t res = int64_dpow2_pl_log_dual(p, pi, n);
+		if( res )
+		{
+			if( res > INT64_0 )
+				*t = pi;
+			else
+				*t = 0;
+			return 0;
+		}
+#endif
 	}
 
 	return n;
+}
+
+static
+int64_t int64_extract_factor_cached(int64_t p, int64_t n, int64_t pi, int64_t *t, const int64_t *powers)
+{
+	if( n > 1 && pi > 1 && 0 == n % pi )
+	{
+		do {
+			n /= pi;
+		} while( 0 == n % pi );
+
+		// found a factor pi^ei
+#if 0
+		int64_t a = int64_dpow2_pl_log_cached(p, powers, n);
+
+		if( a != 1 )
+		{
+			int64_t b = int64_dpow2_pl_log_cached(p, powers, pi);
+
+			if( b == 1 )
+			{
+				*t = pi;
+				return 0; // terminate
+			}
+			else
+			{
+				*t = 0;
+				return 0; // terminate
+			}
+		}
+#endif
+#if 0
+		int64_t b = int64_dpow2_pl_log_cached(p, powers, pi);
+
+		if( b == 1 )
+		{
+			*t = pi;
+			return 0; // terminate
+		}
+		else
+		{
+			int64_t a = int64_dpow2_pl_log_cached(p, powers, n);
+
+			if( a != 1 )
+			{
+				*t = 0;
+				return 0; // terminate
+			}
+		}
+#endif
+#if 1
+		int64_t res = int64_dpow2_pl_log_dual_cached(p, powers, pi, n);
+		if( res )
+		{
+			if( res > INT64_0 )
+				*t = pi;
+			else
+				*t = 0;
+			return 0;
+		}
+#endif
+	}
+
+	return n;
+}
+
+void save_prime_table(const uint8_t *primes, int exponent_limit)
+{
+	FILE *file = fopen("primes.bits", "w");
+
+	if( NULL == file )
+	{
+		message(ERR "Cannot save precomputed table of primes.\n");
+	}
+
+	if( (size_t)(exponent_limit+7)/8 != fwrite(primes, (size_t)1, (size_t)(exponent_limit+7)/8, file) )
+	{
+		message(ERR "Unable to write precomputed prime table.\n");
+	}
+
+	fclose(file);
+}
+
+// Sieve of Eratosthenes
+uint8_t *gen_prime_table(int exponent_limit)
+{
+	message("Creating prime table...\n");
+
+	uint8_t *primes = malloc( (size_t)(exponent_limit+7)/8 );
+
+	if( NULL == primes )
+	{
+		message(ERR "Unable to allocate memory.\n");
+		exit(0);
+	}
+
+	// initially: 0 = prime, 1 = composite
+	bzero(primes, (size_t)(exponent_limit+7)/8);
+
+	set_bit(primes, 0);
+	set_bit(primes, 1);
+
+	for(int i = 2; i <= int_ceil_sqrt(exponent_limit); i++)
+	{
+		if( !get_bit(primes, i) )
+		{
+			for(int j = i*i; j < exponent_limit; j += i)
+			{
+				set_bit(primes, j);
+			}
+		}
+	}
+
+	message("The prime table was created.\n");
+
+	return primes;
+}
+
+uint8_t *load_prime_table(int exponent_limit)
+{
+	// check if file exists
+	FILE *file = fopen("primes.bits", "r");
+
+	if( NULL == file )
+	{
+		message(WARN "Cannot load precomputed table of primes.\n");
+		return NULL;
+	}
+
+	// check if file size corresponds to exponent_limit
+	fseek(file, 0L, SEEK_END);
+	int detected_exponent_limit = (int)ftell(file)*8;
+	rewind(file);
+
+	if( exponent_limit > detected_exponent_limit )
+	{
+		message(WARN "Prime table of insufficient length.\n");
+		fclose(file);
+		return NULL;
+	}
+
+	// malloc
+	uint8_t *primes = malloc( (size_t)(exponent_limit+7)/8 );
+
+	// read the content
+	if( (size_t)(exponent_limit+7)/8 != fread(primes, (size_t)1, (size_t)(exponent_limit+7)/8, file) )
+	{
+		message(ERR "Unable to read precomputed prime table.\n");
+		free(primes);
+		fclose(file);
+		return NULL;
+	}
+
+	fclose(file);
+
+	message("Precomputed table of primes was successfully loaded :)\n");
+
+	return primes;
 }
 
 // 4.79 Algorithm Determining the order of a group element
@@ -1569,9 +1906,8 @@ int64_t int64_element2_order(int64_t p)
 
 	return t;
 #endif
-#if 1
+#if 0
 	int64_t n = p - 1;
-
 	int64_t t = 1;
 
 	n = int64_extract_factor(p, n, 2, &t);
@@ -1585,9 +1921,63 @@ int64_t int64_element2_order(int64_t p)
 
 	return t;
 #endif
+#if 1
+	int64_t n = p - 1;
+	int64_t t = 1;
+
+	// 4 KiB table
+	int64_t powers[64];
+	int64_dpow2_pl_log_cached_init(p, powers, n);
+
+	n = int64_extract_factor_cached(p, n, 2, &t, powers);
+	n = int64_extract_factor_cached(p, n, 3, &t, powers);
+
+	for(int64_t i = 0; n > t; i++)
+	{
+		n = int64_extract_factor_cached(p, n, 6*i+1, &t, powers);
+		n = int64_extract_factor_cached(p, n, 6*i+5, &t, powers);
+	}
+
+	return t;
+#endif
 }
 
 int64_t mp_int64_element2_order(int64_t p) { return int64_element2_order(p); }
+
+static
+int64_t int64_element2_order_prtable(int64_t p, const uint8_t *primes, int exponent_limit)
+{
+	int64_t n = p - 1;
+
+	// 4 KiB table
+	int64_t powers[64];
+	int64_dpow2_pl_log_cached_init(p, powers, n);
+
+	int64_t f = 1;
+
+	do {
+		// 2, 3, 5, 7, 11, 13, ...
+		f = int64_next_prime_cached(f, primes, exponent_limit);
+
+		// prime table is too small :)
+		if( 0 == f )
+			return 0;
+
+		if( n > 1 && 0 == n % f )
+		{
+			do {
+				n /= f;
+			} while( 0 == n % f );
+
+			if( int64_dpow2_pl_log_cached(p, powers, f) == 1 )
+				return f;
+			if( int64_dpow2_pl_log_cached(p, powers, n) != 1 )
+				return 0;
+		}
+	} while(1);
+}
+
+int64_t mp_int64_element2_order_prtable(int64_t p, const uint8_t *primes, int exponent_limit) { return int64_element2_order_prtable(p, primes, exponent_limit); }
 
 // 4.79 Algorithm Determining the order of a group element
 // from Handbook of Applied Cryptography
@@ -2167,18 +2557,6 @@ int message(const char *format, ...)
 	fflush(stdout);
 
 	return n;
-}
-
-static
-void set_bit(uint8_t *ptr, int i)
-{
-	ptr[i/8] |= (uint8_t)( 1 << i%8 );
-}
-
-static
-int get_bit(const uint8_t *ptr, int i)
-{
-	return ptr[i/8] & 1 << i%8;
 }
 
 // 0 : composite
