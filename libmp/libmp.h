@@ -5,6 +5,7 @@
 #define LIBMP_H
 
 #include <stdint.h>
+#include <stddef.h>
 
 #define ERR "ERROR: "
 #define WARN "WARNING: "
@@ -44,12 +45,15 @@ int64_t mp_int64_dpow2_pl(int64_t p, int64_t K);
 int64_t mp_int64_dpow2_pl_log(int64_t p, int64_t K);
 
 int64_t mp_int64_dpow_pl_log(int64_t b, int64_t p, int64_t k);
+int64_t mp_int64_pow_pl_log(int64_t b, int64_t k);
 
 int64_t mp_int64_dlog2_mn(int64_t p);
 int64_t mp_int64_dlog2_pl(int64_t p);
 int64_t mp_int64_dlog2_bg(int64_t p);
 int64_t mp_int64_element2_order(int64_t p);
 int64_t mp_int64_element2_order_prtable(int64_t p, const uint8_t *primes, int exponent_limit);
+int64_t mp_int64_element2_order_prtable_ftable(int64_t p, const uint8_t *primes, int exponent_limit);
+int64_t mp_int64_element2_order_prtable_exponents(int64_t p, const uint8_t *primes, int exponent_limit, const uint8_t *exponents, size_t P);
 
 int64_t mp_int64_dlog2_mn_lim(int64_t p, int64_t L);
 int64_t mp_int64_dlog2_pl_lim(int64_t p, int64_t L);

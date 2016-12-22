@@ -87,6 +87,9 @@ int64_t int64_dmul_int64_assert(int64_t p, int64_t a, int64_t b)
 static
 int64_t int64_dmul_int64_auto(int64_t p, int64_t a, int64_t b)
 {
+	if( 0 == b ) return 0;
+
+	// possible division by zero
 	if( a <= INT64_MAX / b )
 		return (a * b) % p;
 	else
@@ -136,10 +139,10 @@ int64_t int64_dpow2_pl_log(int64_t p, int64_t K)
 	{
 		if( INT64_1 & K )
 		{
-			m = int64_dmul_int64_assert(p, m, b);
+			m = int64_dmul_int64_auto(p, m, b);
 		}
 
-		b = int64_dmul_int64_assert(p, b, b);
+		b = int64_dmul_int64_auto(p, b, b);
 
 		// if( INT64_1 == b ) return m;
 
@@ -178,7 +181,7 @@ void int64_dpow2_pl_log_cached_init(int64_t p, int64_t *powers, int64_t K)
 	{
 		powers[i] = b;
 
-		b = int64_dmul_int64_assert(p, b, b);
+		b = int64_dmul_int64_auto(p, b, b);
 
 		K >>= 1;
 	}
@@ -197,7 +200,7 @@ int64_t int64_dpow2_pl_log_cached(int64_t p, const int64_t *powers, int64_t K)
 	{
 		if( INT64_1 & K )
 		{
-			m = int64_dmul_int64_assert(p, m, powers[i]);
+			m = int64_dmul_int64_auto(p, m, powers[i]);
 		}
 
 		K >>= 1;
@@ -222,10 +225,10 @@ int64_t int64_dpow2_pl_log_dual(int64_t p, int64_t K1, int64_t K2)
 
 	for(size_t i = 0; K1 > INT64_0 || K2 > INT64_0; i++)
 	{
-		if( INT64_1 & K1 ) m1 = int64_dmul_int64_assert(p, m1, b);
-		if( INT64_1 & K2 ) m2 = int64_dmul_int64_assert(p, m2, b);
+		if( INT64_1 & K1 ) m1 = int64_dmul_int64_auto(p, m1, b);
+		if( INT64_1 & K2 ) m2 = int64_dmul_int64_auto(p, m2, b);
 
-		b = int64_dmul_int64_assert(p, b, b);
+		b = int64_dmul_int64_auto(p, b, b);
 
 		K1 >>= 1;
 		K2 >>= 1;
@@ -254,8 +257,8 @@ int64_t int64_dpow2_pl_log_dual_cached(int64_t p, const int64_t *powers,
 
 	for(size_t i = 0; K1 > INT64_0 || K2 > INT64_0; i++)
 	{
-		if( INT64_1 & K1 ) m1 = int64_dmul_int64_assert(p, m1, powers[i]);
-		if( INT64_1 & K2 ) m2 = int64_dmul_int64_assert(p, m2, powers[i]);
+		if( INT64_1 & K1 ) m1 = int64_dmul_int64_auto(p, m1, powers[i]);
+		if( INT64_1 & K2 ) m2 = int64_dmul_int64_auto(p, m2, powers[i]);
 
 		K1 >>= 1;
 		K2 >>= 1;
@@ -356,6 +359,7 @@ int64_t int64_pow_pl_log(int64_t b, int64_t k)
 {
 	assert( k >= INT64_0 );
 
+#if 0
 	int64_t m = INT64_1;
 
 	while( k > INT64_0 )
@@ -365,10 +369,33 @@ int64_t int64_pow_pl_log(int64_t b, int64_t k)
 			m = int64_mul_int64_auto(m, b);
 		}
 
+		// possible overflow
 		b = int64_mul_int64_auto(b, b);
 
 		k >>= 1;
 	}
+#else
+	int64_t m = INT64_1;
+
+	if( INT64_1 & k )
+	{
+		m = int64_mul_int64_auto(m, b);
+	}
+
+	k >>= 1;
+
+	while( k > INT64_0 )
+	{
+		b = int64_mul_int64_auto(b, b);
+
+		if( INT64_1 & k )
+		{
+			m = int64_mul_int64_auto(m, b);
+		}
+
+		k >>= 1;
+	}
+#endif
 
 	return m;
 }
@@ -477,7 +504,7 @@ int64_t int64_dpow2_mn_log(int64_t p, int64_t K)
 	int64_t m = INT64_1;
 	for(int b = 8*sizeof(int64_t)-1; b >= 0; b--)
 	{
-		m = int64_dmul_int64_assert(p, m, m);
+		m = int64_dmul_int64_auto(p, m, m);
 
 		if( K & (INT64_1<<b) )
 		{
@@ -1978,6 +2005,117 @@ int64_t int64_element2_order_prtable(int64_t p, const uint8_t *primes, int expon
 }
 
 int64_t mp_int64_element2_order_prtable(int64_t p, const uint8_t *primes, int exponent_limit) { return int64_element2_order_prtable(p, primes, exponent_limit); }
+
+/*
+testing the bit level 25...
+        mp_int64_dlog2_bg_lim PRIME
+                4203 seconds elapsed (0.125259 msecs per each state).
+
+        mp_int64_element2_order PRIME
+                13074 seconds elapsed (0.389636 msecs per each state).
+
+        mp_int64_element2_order_prtable PRIME
+                5740 seconds elapsed (0.171065 msecs per each state).
+*/
+
+static
+int64_t int64_element2_order_prtable2(int64_t p, const uint8_t *primes, int exponent_limit)
+{
+	// assert( p : PRIME );
+
+	int64_t n = p - 1;
+
+	// 4 KiB table
+	int64_t powers[64];
+
+	int64_dpow2_pl_log_cached_init(p, powers, n);
+
+	int64_t f = 1;
+
+	while( f < n )
+	{
+		// 2, 3, 5, 7, 11, 13, ...
+		f = int64_next_prime_cached(f, primes, exponent_limit);
+
+		// prime table is too small
+		if( 0 == f )
+			return 0;
+
+		if( 0 == n % f )
+		{
+#if 1
+			if( int64_dpow2_pl_log_cached(p, powers, f) == 1 )
+				return f;
+#endif
+			do {
+				n /= f;
+			} while( 0 == n % f );
+
+#if 0
+			if( int64_dpow2_pl_log_cached(p, powers, f) == 1 )
+				return f;
+#endif
+#if 0
+			if( int64_dpow2_pl_log_cached(p, powers, n) != 1 )
+				return 0;
+#endif
+#if 0
+			if( int64_dpow2_pl_log_cached(p, powers, n) != 1 )
+			{
+				if( int64_dpow2_pl_log_cached(p, powers, f) == 1 )
+					return f;
+				return 0;
+			}
+#endif
+#if 0
+			int64_t res = int64_dpow2_pl_log_dual_cached(p, powers, f, n);
+			if( res )
+			{
+				if( res > INT64_0 )
+					return f;
+				else
+					return 0;
+			}
+#endif
+		}
+	}
+
+	// already factorized
+	return 0;
+}
+
+int64_t mp_int64_element2_order_prtable2(int64_t p, const uint8_t *primes, int exponent_limit) { return int64_element2_order_prtable2(p, primes, exponent_limit); }
+
+static
+int64_t int64_element2_order_prtable_exponents(int64_t p, const uint8_t *primes, int exponent_limit, const uint8_t *exponents, size_t P)
+{
+	int64_t powers[64];
+
+	int64_dpow2_pl_log_cached_init(p, powers, p-1);
+	int64_t f = 1;
+
+	for(size_t i = 0; i < P; i++)
+	{
+		uint8_t e = exponents[i];
+
+		f = int64_next_prime_cached(f, primes, exponent_limit);
+
+// 		if( 0 == f )
+// 			return 0;
+
+		// f^e
+
+		if( e )
+		{
+			if( int64_dpow2_pl_log_cached(p, powers, f) == 1 )
+				return f;
+		}
+	}
+
+	return 0;
+}
+
+int64_t mp_int64_element2_order_prtable_exponents(int64_t p, const uint8_t *primes, int exponent_limit, const uint8_t *exponents, size_t P) { return int64_element2_order_prtable_exponents(p, primes, exponent_limit, exponents, P); }
 
 // 4.79 Algorithm Determining the order of a group element
 // from Handbook of Applied Cryptography
