@@ -54,13 +54,6 @@ void sighandler_usr2(int signum)
 	signal(SIGUSR2, sighandler_usr2);
 }
 
-#define INT128_C(c) ((int128_t)INT64_C(c))
-#define INT128_0 INT128_C(0)
-#define INT128_1 INT128_C(1)
-#define INT128_2 INT128_C(2)
-#define INT128_L64(x) ((int64_t)(x))
-#define INT128_H64(x) ((int64_t)((x)>>64))
-
 int ceil_sqrt(int n)
 {
 	assert( n > 0 );
@@ -150,7 +143,7 @@ int int128_is_prime_fast(int128_t p)
 	const int128_t sqrt4_p = int128_ceil_sqrt(sqrt_p);
 
 	// 3, 5, 7, 9, 11, ...
-	for(int128_t factor = INT128_C(3); factor <= sqrt4_p; factor += INT128_2)
+	for(int128_t factor = 3; factor <= sqrt4_p; factor += INT128_2)
 	{
 		if( p % factor == INT128_0 )
 			// composite
