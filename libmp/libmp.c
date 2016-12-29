@@ -67,6 +67,23 @@ int64_t int64_next_prime_cached(int64_t p, const uint8_t *primes, int exponent_l
 
 int64_t mp_int64_next_prime_cached(int64_t p, const uint8_t *primes, int exponent_limit) { return int64_next_prime_cached(p, primes, exponent_limit); }
 
+static
+int128_t int128_next_prime_cached(int128_t p, const uint8_t *primes, int exponent_limit)
+{
+	assert( p >= INT128_0 );
+
+	do {
+		p++;
+	} while( p < (int128_t)exponent_limit && get_bit(primes, (int)p) );
+
+	if( p < (int128_t)exponent_limit )
+		return p;
+
+	return INT128_0;
+}
+
+int128_t mp_int128_next_prime_cached(int128_t p, const uint8_t *primes, int exponent_limit) { return int128_next_prime_cached(p, primes, exponent_limit); }
+
 // a*b (mod p)
 static
 int64_t int64_dmul_int128(int64_t p, int64_t a, int64_t b)
@@ -116,14 +133,92 @@ int128_t int128_mul_int128_auto(int128_t a, int128_t b)
 		abort(); // return int128_mul_int256(a, b);
 }
 
+static
+uint128_t uint128_dmul_uint256(uint128_t p, uint128_t a, uint128_t b)
+{
+	assert( p > 0 );
+
+	uint128_t al = UINT128_L(a);
+	uint128_t ah = UINT128_H(a);
+	uint128_t bl = UINT128_L(b);
+	uint128_t bh = UINT128_H(b);
+
+	// a * b
+	uint128_t ll = al * bl;
+	uint128_t hl = ah * bl;
+	uint128_t lh = al * bh;
+	uint128_t hh = ah * bh;
+
+	hl += UINT128_H(ll);
+	hl += UINT128_L(lh);
+
+	uint128_t L = UINT128_L(hl)<<64 | UINT128_L(ll);
+
+	hh += UINT128_H(hl);
+	hh += UINT128_H(lh);
+
+	uint128_t H = hh;
+
+	uint128_t m = H % p;
+
+	if(!m)
+		return L % p;
+
+	for(int b = 0; b < 128; b++)
+	{
+		if( m >= (p+1)/2 )
+			m = 2*m-p;
+		else
+			m = 2*m;
+	}
+
+	uint128_t m0 = L % p;
+
+	if( m > p - m0 )
+		m = m + m0 - p;
+	else
+		m = m + m0;
+
+	return m;
+}
+
+// a*b (mod p)
+static
+uint128_t uint128_dmul(uint128_t p, uint128_t a, uint128_t b)
+{
+	assert( p > 0 );
+
+	if( a == 0 || b == 0 )
+		return 0;
+
+	if( a > UINT128_MAX / b )
+		return uint128_dmul_uint256(p, a, b);
+
+	return (a * b) % p;
+}
+
 // a*b (mod p)
 static
 int128_t int128_dmul_int128_assert(int128_t p, int128_t a, int128_t b)
 {
+#if 0
+
 	assert( a <= INT128_MAX / b );
 
 	return (a * b) % p;
+#else
+	return (int128_t)uint128_dmul((uint128_t)p, (uint128_t)a, (uint128_t)b);
+#endif
 }
+
+// a*b (mod p)
+static
+int128_t int128_dmul(int128_t p, int128_t a, int128_t b)
+{
+	return (int128_t)uint128_dmul((uint128_t)p, (uint128_t)a, (uint128_t)b);
+}
+
+int128_t mp_int128_dmul(int128_t p, int128_t a, int128_t b) { return int128_dmul(p, a, b); }
 
 // 2^(+K) (mod p), exponentiation by squaring, O(log2(K)) complexity
 static
@@ -170,6 +265,8 @@ int64_t int64_dpow2_pl_log(int64_t p, int64_t K)
 	return m;
 #endif
 }
+
+int64_t mp_int64_dpow2_pl_log(int64_t p, int64_t K) { return int64_dpow2_pl_log(p, K); }
 
 // K : maximal n
 static
@@ -270,16 +367,13 @@ int64_t int64_dpow2_pl_log_dual_cached(int64_t p, const int64_t *powers,
 		return -1;
 	return 0;
 }
-
-int64_t mp_int64_dpow2_pl_log(int64_t p, int64_t K) { return int64_dpow2_pl_log(p, K); }
-
 // 2^(+K) (mod p), exponentiation by squaring, O(log2(K)) complexity
 static
 int128_t int128_dpow2_pl_log(int128_t p, int128_t K)
 {
 	assert( p > INT128_0 );
 	assert( K >= INT128_0 );
-#if 1
+#if 0
 	int128_t b = INT128_2;
 	int128_t m = INT128_1;
 
@@ -290,7 +384,32 @@ int128_t int128_dpow2_pl_log(int128_t p, int128_t K)
 			m = int128_dmul_int128_assert(p, m, b);
 		}
 
+		// FIXME: possible overflow
 		b = int128_dmul_int128_assert(p, b, b);
+
+		K >>= 1;
+	}
+
+	return m;
+#else
+	int128_t b = INT128_2;
+	int128_t m = INT128_1;
+
+	if( INT128_1 & K )
+	{
+		m = int128_dmul_int128_assert(p, m, b);
+	}
+
+	K >>= 1;
+
+	while( K > INT128_0 )
+	{
+		b = int128_dmul_int128_assert(p, b, b);
+
+		if( INT128_1 & K )
+		{
+			m = int128_dmul_int128_assert(p, m, b);
+		}
 
 		K >>= 1;
 	}
@@ -2351,7 +2470,7 @@ int128_t int128_dlog2_bg_lim(int128_t p, int128_t L)
 	if( INT128_1 == p )
 		return INT128_0;
 
-	int128_t m = int128_ceil_div(int128_ceil_sqrt(p), INT128_C(3));
+	int128_t m = int128_ceil_div(int128_ceil_sqrt(p), 3);
 
 	size_t cache_size = 1<<20;
 	if( 2*m*sizeof(int128_t) > cache_size )
@@ -2419,7 +2538,7 @@ int128_t int128_dlog2_bg(int128_t p)
 	if( INT128_1 == p )
 		return INT128_0;
 
-	int128_t m = int128_ceil_div(int128_ceil_sqrt(p), INT128_C(3));
+	int128_t m = int128_ceil_div(int128_ceil_sqrt(p), 3);
 
 	size_t cache_size = 1<<20;
 	if( 2*m*sizeof(int128_t) > cache_size )
@@ -2523,7 +2642,7 @@ int int128_is_prime(int128_t p)
 	const int128_t sqrt_p = int128_floor_sqrt(p);
 
 	// 3, 5, 7, 9, 11, ...
-	for(int128_t factor = INT128_C(3); factor <= sqrt_p; factor += INT128_2)
+	for(int128_t factor = 3; factor <= sqrt_p; factor += INT128_2)
 	{
 		if( p % factor == INT128_0 )
 			return 0;
@@ -2755,7 +2874,7 @@ void int128_test_prtest(uint8_t *record, int128_t factor, int exponent_limit, co
 	}
 
 	// check if the factor \equiv \pm 1 in \pmod 8
-	if( (INT128_C(1) != (factor&INT128_C(7))) && (INT128_C(7) != (factor&INT128_C(7))) )
+	if( (1 != (factor&7)) && (7 != (factor&7)) )
 	{
 		return;
 	}
@@ -2821,7 +2940,7 @@ void int128_test_direct(uint8_t *record, int128_t factor, int exponent_limit, co
 	}
 
 	// check if the factor \equiv \pm 1 in \pmod 8
-	if( (INT128_C(1) != (factor&INT128_C(7))) && (INT128_C(7) != (factor&INT128_C(7))) )
+	if( (1 != (factor&7)) && (7 != (factor&7)) )
 	{
 		return;
 	}

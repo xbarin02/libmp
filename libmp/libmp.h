@@ -10,6 +10,7 @@
 #define ERR "ERROR: "
 #define WARN "WARNING: "
 #define DBG "DEBUG: "
+#define INFO "INFO: "
 
 int message(const char *format, ...);
 
@@ -94,14 +95,30 @@ typedef __int128 int128_t;
 typedef unsigned __int128 uint128_t;
 #pragma GCC diagnostic pop
 
-#define INT128_C(c) ((int128_t)INT64_C(c))
-#define INT128_0 INT128_C(0)
-#define INT128_1 INT128_C(1)
-#define INT128_2 INT128_C(2)
-#define INT128_L64(x) ((int64_t)(x))
-#define INT128_H64(x) ((int64_t)((x)>>64))
+#define  INT128_C(h,l) ( ((( int128_t) INT64_C(h))<<64) | ( INT64_C(l)) )
+#define UINT128_C(h,l) ( (((uint128_t)UINT64_C(h))<<64) | (UINT64_C(l)) )
+
+#define  INT128_0  INT128_C(0,0)
+#define  INT128_1  INT128_C(0,1)
+#define  INT128_2  INT128_C(0,2)
+#define UINT128_0 UINT128_C(0,0)
+#define UINT128_1 UINT128_C(0,1)
+#define UINT128_2 UINT128_C(0,2)
+
+#define UINT128_L(x) ((x) & UINT64_MAX)
+#define UINT128_H(x) ((x)>>64)
+
+#define  INT128_L64(x) (( int64_t)((x)))
+#define  INT128_H64(x) (( int64_t)((x)>>64))
+#define UINT128_L64(x) ((uint64_t)((x)))
+#define UINT128_H64(x) ((uint64_t)((x)>>64))
+
 #define INT128_MAX (int128_t) (((uint128_t) 1 << ((__SIZEOF_INT128__ * __CHAR_BIT__) - 1)) - 1)
 #define INT128_MIN (-INT128_MAX - 1)
+#define UINT128_MIN ((int128_t) 0)
+#define UINT128_MAX ( ~(uint128_t)0 )
+
+int128_t mp_int128_dmul(int128_t p, int128_t a, int128_t b);
 
 int128_t mp_int128_dpow2_mn(int128_t p, int128_t K);
 int128_t mp_int128_dpow2_mn_log(int128_t p, int128_t K);
@@ -126,6 +143,8 @@ int128_t mp_int128_ceil_div(int128_t a, int128_t b);
 int mp_int128_is_prime(int128_t p);
 int mp_int128_is_prime_wheel6(int128_t p);
 int mp_int128_is_prime_wheel30(int128_t p);
+
+int128_t mp_int128_next_prime_cached(int128_t p, const uint8_t *primes, int exponent_limit);
 
 void mp_int128_test_prtest(uint8_t *record, int128_t factor, int exponent_limit, const uint8_t *primes);
 void mp_int128_test_direct(uint8_t *record, int128_t factor, int exponent_limit, const uint8_t *primes);
