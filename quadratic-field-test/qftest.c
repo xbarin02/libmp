@@ -4,46 +4,45 @@
 #include <assert.h>
 #include <libmp.h>
 
-// const int64_t D = -7;
-// const int64_t D = -1;
-const int64_t D = 2;
-// const int64_t D = 3;
+// test a^(p-1) == 1 rather than a^p == p
+// #define TEST_P1
 
+// a + b*sqrt(D)
 typedef struct { int64_t a, b; } qfield64_t;
 
 // n^2 (mod M)
-qfield64_t qfield64_square(qfield64_t n, int64_t M)
+qfield64_t qfield64_square(qfield64_t n, int64_t M, int64_t D)
 {
 	return (qfield64_t){
-		( mp_int64_dmul(M, n.a, n.a) + mp_int64_dmul(M, (M+D)%M, mp_int64_dmul(M, n.b, n.b)) ) % M,
-		( 2*mp_int64_dmul(M, n.a, n.b) ) % M
+		mp_int64_dadd(M, mp_int64_dmul(M, n.a, n.a), mp_int64_dmul(M, mp_int64_dadd(M, M, D), mp_int64_dmul(M, n.b, n.b))),
+		mp_int64_dadd(M, mp_int64_dmul(M, n.a, n.b), mp_int64_dmul(M, n.a, n.b))
 	};
 }
 
 // n1*n2 (mod M)
-qfield64_t qfield64_mul(qfield64_t n1, qfield64_t n2, int64_t M)
+qfield64_t qfield64_mul(qfield64_t n1, qfield64_t n2, int64_t M, int64_t D)
 {
 	return (qfield64_t){
-		( mp_int64_dmul(M, n1.a, n2.a) + mp_int64_dmul(M, (M+D)%M, mp_int64_dmul(M, n1.b, n2.b)) ) %M,
-		( mp_int64_dmul(M, n1.a, n2.b) + mp_int64_dmul(M, n2.a, n1.b) ) %M
+		mp_int64_dadd(M, mp_int64_dmul(M, n1.a, n2.a), mp_int64_dmul(M, mp_int64_dadd(M, M, D), mp_int64_dmul(M, n1.b, n2.b))),
+		mp_int64_dadd(M, mp_int64_dmul(M, n1.a, n2.b), mp_int64_dmul(M, n2.a, n1.b))
 	};
 }
 
 // ||n|| (mod M)
-int64_t qfield64_norm(qfield64_t n, int64_t M)
+int64_t qfield64_norm(qfield64_t n, int64_t M, int64_t D)
 {
 	return ( mp_int64_dmul(M, n.a, n.a) + mp_int64_dmul(M, (M+D)%M, mp_int64_dmul(M, (M-n.b), n.b)) ) % M;
 }
 
-#define sym(x) ( ((x) > (M)/2) ? ((x)-(M)) : (x) )
-
-void qfield64_print(qfield64_t n, int64_t M)
+void qfield64_print(qfield64_t n, int64_t M, int64_t D)
 {
-	printf("%li%+li√%li", sym(n.a), sym(n.b), D);
+#	define sym(x) ( ((x) > (M)/2) ? ((x)-(M)) : (x) )
+	printf("%li%+li√%li (norm=%li)", sym(n.a), sym(n.b), D, sym(qfield64_norm(n, M, D)));
+#	undef sym
 }
 
 // b^k (mod M)
-qfield64_t qfield64_pow(qfield64_t b, int k, int64_t M)
+qfield64_t qfield64_pow(qfield64_t b, int k, int64_t M, int64_t D)
 {
 	assert( k >= 0 );
 
@@ -53,10 +52,10 @@ qfield64_t qfield64_pow(qfield64_t b, int k, int64_t M)
 	{
 		if( 1 & k )
 		{
-			m = qfield64_mul(m, b, M);
+			m = qfield64_mul(m, b, M, D);
 		}
 
-		b = qfield64_square(b, M);
+		b = qfield64_square(b, M, D);
 
 		k >>= 1;
 	}
@@ -64,25 +63,23 @@ qfield64_t qfield64_pow(qfield64_t b, int k, int64_t M)
 	return m;
 }
 
-int qftest(int64_t n)
+int qftest(int64_t n, int64_t D, qfield64_t a)
 {
 	int64_t M = n;
 
-// 	qfield64_t a = (qfield64_t){ 1, 1 };
-// 	qfield64_t a = (qfield64_t){ 3, 2 };
-// 	qfield64_t a = (qfield64_t){ 1, (M+1)/2 };
-// 	qfield64_t a = (qfield64_t){ (M+1)/2, (M+1)/2 };
-	qfield64_t a = (qfield64_t){ 1, 2 };
-// 	qfield64_t a = (qfield64_t){ 2, 0 };
-
 	qfield64_t s = a;
 
-// 	printf("a^1 = "); qfield64_print(s, M); printf("; norm=%li", sym(qfield64_norm(s, M))); printf("\n");
+// 	printf("a^1 = "); qfield64_print(s, M, D); printf("\n");
 
-	s = qfield64_pow(a, M, M);
+#ifndef TEST_P1
+	s = qfield64_pow(a, M, M, D); // a^p
+#else
+	s = qfield64_pow(a, M-1, M, D); // a^(p-1)
+#endif
 
-// 	printf("a^M = "); qfield64_print(s, M); printf("; norm=%li", sym(qfield64_norm(s, M))); printf("\n");
+// 	printf("a^M = "); qfield64_print(s, M, D); printf("\n");
 
+#ifndef TEST_P1
 	if( s.a==a.a && s.b==a.b )
 	{
 		return +1;
@@ -91,44 +88,80 @@ int qftest(int64_t n)
 	{
 		return -1;
 	}
-	else
+#else
+	if( s.a==1 && s.b==0 )
 	{
-		return 0;
+		return +1;
 	}
+#endif
+
+	return 0;
+}
+
+int qftest2(int64_t n)
+{
+	int result = 1;
+
+// 	result *= qftest(n, /*D*/+1, (qfield64_t){2, 0} ); // 2
+// 	result *= qftest(n, /*D*/+1, (qfield64_t){3, 0} ); // 3
+// 	result *= qftest(n, /*D*/+1, (qfield64_t){5, 0} ); // 5
+
+// 	result *= qftest(n, /*D*/-2, (qfield64_t){1, 1} ); // 1+i*sqrt(2)
+// 	result *= qftest(n, /*D*/-1, (qfield64_t){1, 1} ); // 1+i
+// 	result *= qftest(n, /*D*/+2, (qfield64_t){1, 1} ); // 1+sqrt(2)
+	result *= qftest(n, /*D*/+2, (qfield64_t){1, 1} ); // 1+sqrt(3)
+// 	result *= qftest(n, /*D*/+7, (qfield64_t){1, 1} ); // 1+sqrt(7)
+
+// 	result *= qftest(n, /*D*/+2, (qfield64_t){3, 2} ); // 3+2sqrt(2)
+// 	result *= qftest(n, /*D*/+2, (qfield64_t){ 1, (n+1)/2 } ); // 1 + ...
+// 	result *= qftest(n, /*D*/+2, (qfield64_t){ (n+1)/2, (n+1)/2 } ); // ... + ...
+
+	return result;
 }
 
 int main(int argc, char *argv[])
 {
 	message("%s: Fermat's little theorem in terms of quadratic fields\n", argv[0]);
 
-	message("quadratic field: Q(√%li)\n", D);
+	int64_t pseudoprimes = 0;
+	int64_t pseudoprimes_p = 0;
+	int64_t pseudoprimes_n = 0;
+	int64_t failed = 0;
+
+// 	int64_t bound = 20;
+	int64_t bound = 1000;
+// 	int64_t bound = 1000000;
+
+	// print differences
+	int debug = 0;
+
+	// print list of pseudoprimes
+	int print_pseudoprimes = 1;
+
+	if( print_pseudoprimes )
+		printf("pseudoprimes: ");
 
 	// for each number
-	for(int64_t n = 3; n < 100000; n++)
+	for(int64_t n = 2; n < bound; n++)
 	{
-		if( !!mp_int64_is_prime(n) != !!qftest(n) )
-		{
-			if( mp_int64_is_prime(n) )
-			{
-				message("(reference) %li: PRIME\n", n);
-			}
-			else
-			{
-				message("(reference) %li: COMPOSITE\n", n);
-			}
+		int r = mp_int64_is_prime(n);
+		int t = qftest2(n);
 
-			if( qftest(n) )
-			{
-				message("(qftest) %li: PRIME\n", n);
-			}
-			else
-			{
-				message("(qftest) %li: COMPOSITE\n", n);
-			}
+		if( !!r != !!t )
+		{
+			if( !!t ) pseudoprimes++;
+			if( t > 0 ) pseudoprimes_p++;
+			if( t < 0 ) pseudoprimes_n++;
+			if( !!r ) failed++;
+			if( !!r && debug ) printf("FAIL: %li is PRIME, result was COMPOSITE\n", n);
+			if( !!t && print_pseudoprimes ) printf("%li, ", n);
 		}
 	}
 
-	message("done\n");
+	if( print_pseudoprimes )
+		printf(", ...\n");
+
+	message("done: %li pseudoprimes (+: %li, -: %li), %li fails under %li\n", pseudoprimes, pseudoprimes_p, pseudoprimes_n, failed, bound);
 
 	return 0;
 }
