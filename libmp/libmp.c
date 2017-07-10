@@ -113,6 +113,8 @@ int64_t int64_dmul_int64_auto(int64_t p, int64_t a, int64_t b)
 		return int64_dmul_int128(p, a, b);
 }
 
+int64_t mp_int64_dmul(int64_t p, int64_t a, int64_t b) { return int64_dmul_int64_auto(p, a, b); }
+
 // a*b
 static
 int64_t int64_mul_int64_auto(int64_t a, int64_t b)

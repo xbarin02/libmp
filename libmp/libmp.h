@@ -40,6 +40,8 @@ int mp_int_next_prime_cached(int p, const uint8_t *primes, int exponent_limit);
 #define INT64_1 INT64_C(1)
 #define INT64_2 INT64_C(2)
 
+int64_t mp_int64_dmul(int64_t p, int64_t a, int64_t b);
+
 int64_t mp_int64_dpow2_mn(int64_t p, int64_t K);
 int64_t mp_int64_dpow2_mn_log(int64_t p, int64_t K);
 int64_t mp_int64_dpow2_pl(int64_t p, int64_t K);
