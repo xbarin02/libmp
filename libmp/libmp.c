@@ -115,6 +115,21 @@ int64_t int64_dmul_int64_auto(int64_t p, int64_t a, int64_t b)
 
 int64_t mp_int64_dmul(int64_t p, int64_t a, int64_t b) { return int64_dmul_int64_auto(p, a, b); }
 
+// a+b (mod p)
+static
+int64_t int64_dadd_int64_auto(int64_t p, int64_t a, int64_t b)
+{
+	if( b == 0 || ( b > 0 && a <= INT64_MAX - b ) || ( b < 0 && a >= INT64_MIN - b ) )
+		return (a + b) % p;
+	else
+	{
+		message("not implemented\n");
+		abort();
+	}
+}
+
+int64_t mp_int64_dadd(int64_t p, int64_t a, int64_t b) { return int64_dadd_int64_auto(p, a, b); }
+
 // a*b
 static
 int64_t int64_mul_int64_auto(int64_t a, int64_t b)
