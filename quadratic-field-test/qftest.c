@@ -106,7 +106,6 @@ int qftest(int64_t n, int64_t D, qfield64_t a)
 	if( a.b == 0 && 0 == M % a.a )
 	{
 // 		message(WARN "COMPOSITE by a base (%li) cannot be divisible by 'p' (%li)\n", a.a, M);
-		return 0;
 	}
 
 	// numerator / denominator
@@ -119,7 +118,7 @@ int qftest(int64_t n, int64_t D, qfield64_t a)
 // 		message("(+): s = "); qfield64_print(s, M, D); printf("\n");
 		return +1;
 	}
-	else if( antiunit_denominator > 0 && ( s_mul_antiunit_denominator.a == antiunit_numerator.a && s_mul_antiunit_denominator.b == antiunit_numerator.b ) )
+	else if( a.b != 0 && antiunit_denominator > 0 && ( s_mul_antiunit_denominator.a == antiunit_numerator.a && s_mul_antiunit_denominator.b == antiunit_numerator.b ) )
 	{
 // 		message("(-): s = "); qfield64_print(s, M, D); printf("\n");
 		return -1;
