@@ -138,15 +138,19 @@ int qftest2(int64_t n)
 // 	result *= qftest(n, /*D*/+1, (qfield64_t){5, 0} ); // 5
 // 	result *= qftest(n, /*D*/+1, (qfield64_t){7, 0} ); // 7
 
+// 	result *= qftest(n, /*D*/-7, (qfield64_t){1, 1} ); // 1+i*sqrt(7)
+// 	result *= qftest(n, /*D*/-5, (qfield64_t){1, 1} ); // 1+i*sqrt(5)
+// 	result *= qftest(n, /*D*/-3, (qfield64_t){1, 1} ); // 1+i*sqrt(3)
 // 	result *= qftest(n, /*D*/-2, (qfield64_t){1, 1} ); // 1+i*sqrt(2)
 // 	result *= qftest(n, /*D*/-1, (qfield64_t){1, 1} ); // 1+i
-// 	result *= qftest(n, /*D*/+2, (qfield64_t){1, 1} ); // 1+sqrt(2)
+	result *= qftest(n, /*D*/+2, (qfield64_t){1, 1} ); // 1+sqrt(2)
 // 	result *= qftest(n, /*D*/+3, (qfield64_t){1, 1} ); // 1+sqrt(3)
-	result *= qftest(n, /*D*/+7, (qfield64_t){1, 1} ); // 1+sqrt(7)
+// 	result *= qftest(n, /*D*/+5, (qfield64_t){1, 1} ); // 1+sqrt(5)
+// 	result *= qftest(n, /*D*/+7, (qfield64_t){1, 1} ); // 1+sqrt(7)
 
 // 	result *= qftest(n, /*D*/+2, (qfield64_t){3, 2} ); // 3+2sqrt(2)
-// 	result *= qftest(n, /*D*/+2, (qfield64_t){ 1, (n+1)/2 } ); // 1 + ...
-// 	result *= qftest(n, /*D*/+2, (qfield64_t){ (n+1)/2, (n+1)/2 } ); // ... + ...
+// 	result *= qftest(n, /*D*/+2, (qfield64_t){ 1, (n+1)/2 } ); // 1 + sqrt(2)/2
+// 	result *= qftest(n, /*D*/+2, (qfield64_t){ (n+1)/2, (n+1)/2 } ); // ( 1 + sqrt(2) ) / 2
 
 	return result;
 }
@@ -162,11 +166,12 @@ int main(int argc, char *argv[])
 
 // 	int64_t bound = 20;
 // 	int64_t bound = 1000;
-	int64_t bound = 100000;
-// 	int64_t bound = 1000000;
+// 	int64_t bound = 100000;
+	int64_t bound = 1000000;
+// 	int64_t bound = 1000000000;
 
 	// print differences
-	int debug = 1;
+	int debug = 0;
 
 	// print list of pseudoprimes
 	int print_pseudoprimes = 1;
