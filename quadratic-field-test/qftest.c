@@ -5,7 +5,7 @@
 #include <libmp.h>
 
 // test a^(p-1) == 1 rather than a^p == p
-// #define TEST_P1
+#define TEST_P1
 
 // a + b*sqrt(D)
 typedef struct { int64_t a, b; } qfield64_t;
@@ -67,6 +67,19 @@ int qftest(int64_t n, int64_t D, qfield64_t a)
 {
 	int64_t M = n;
 
+	assert( a.a >= 0 && a.b >= 0 && "the base should be in (mod M)" );
+
+	a.a %= M;
+	a.b %= M;
+
+	assert( a.a < M && a.b < M && "the base should be in (mod M)"  );
+
+	if( a.a == 0 )
+	{
+// 		message("REJECTED %li, may be a prime\n", M);
+		return 1;
+	}
+
 	qfield64_t s = a;
 
 // 	printf("a^1 = "); qfield64_print(s, M, D); printf("\n");
@@ -89,9 +102,27 @@ int qftest(int64_t n, int64_t D, qfield64_t a)
 		return -1;
 	}
 #else
+	// e.g, testing number M=66 with base a=3
+	if( a.b == 0 && 0 == M % a.a )
+	{
+// 		message(WARN "COMPOSITE by a base (%li) cannot be divisible by 'p' (%li)\n", a.a, M);
+		return 0;
+	}
+
+	// numerator / denominator
+	int64_t antiunit_denominator = qfield64_norm(a, M, D);
+	qfield64_t antiunit_numerator = qfield64_square((qfield64_t){ a.a, M-a.b }, M, D);
+	qfield64_t s_mul_antiunit_denominator = (qfield64_t){ (s.a*antiunit_denominator)%M, (s.b*antiunit_denominator)%M };
+
 	if( s.a==1 && s.b==0 )
 	{
+// 		message("(+): s = "); qfield64_print(s, M, D); printf("\n");
 		return +1;
+	}
+	else if( antiunit_denominator > 0 && ( s_mul_antiunit_denominator.a == antiunit_numerator.a && s_mul_antiunit_denominator.b == antiunit_numerator.b ) )
+	{
+// 		message("(-): s = "); qfield64_print(s, M, D); printf("\n");
+		return -1;
 	}
 #endif
 
@@ -105,12 +136,13 @@ int qftest2(int64_t n)
 // 	result *= qftest(n, /*D*/+1, (qfield64_t){2, 0} ); // 2
 // 	result *= qftest(n, /*D*/+1, (qfield64_t){3, 0} ); // 3
 // 	result *= qftest(n, /*D*/+1, (qfield64_t){5, 0} ); // 5
+// 	result *= qftest(n, /*D*/+1, (qfield64_t){7, 0} ); // 7
 
 // 	result *= qftest(n, /*D*/-2, (qfield64_t){1, 1} ); // 1+i*sqrt(2)
 // 	result *= qftest(n, /*D*/-1, (qfield64_t){1, 1} ); // 1+i
 // 	result *= qftest(n, /*D*/+2, (qfield64_t){1, 1} ); // 1+sqrt(2)
-	result *= qftest(n, /*D*/+2, (qfield64_t){1, 1} ); // 1+sqrt(3)
-// 	result *= qftest(n, /*D*/+7, (qfield64_t){1, 1} ); // 1+sqrt(7)
+// 	result *= qftest(n, /*D*/+3, (qfield64_t){1, 1} ); // 1+sqrt(3)
+	result *= qftest(n, /*D*/+7, (qfield64_t){1, 1} ); // 1+sqrt(7)
 
 // 	result *= qftest(n, /*D*/+2, (qfield64_t){3, 2} ); // 3+2sqrt(2)
 // 	result *= qftest(n, /*D*/+2, (qfield64_t){ 1, (n+1)/2 } ); // 1 + ...
@@ -129,11 +161,12 @@ int main(int argc, char *argv[])
 	int64_t failed = 0;
 
 // 	int64_t bound = 20;
-	int64_t bound = 1000;
+// 	int64_t bound = 1000;
+	int64_t bound = 100000;
 // 	int64_t bound = 1000000;
 
 	// print differences
-	int debug = 0;
+	int debug = 1;
 
 	// print list of pseudoprimes
 	int print_pseudoprimes = 1;
@@ -142,7 +175,7 @@ int main(int argc, char *argv[])
 		printf("pseudoprimes: ");
 
 	// for each number
-	for(int64_t n = 2; n < bound; n++)
+	for(int64_t n = 3; n < bound; n++)
 	{
 		int r = mp_int64_is_prime(n);
 		int t = qftest2(n);
