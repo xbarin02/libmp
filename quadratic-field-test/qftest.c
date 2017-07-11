@@ -63,6 +63,19 @@ qfield64_t qfield64_pow(qfield64_t b, int k, int64_t M, int64_t D)
 	return m;
 }
 
+int is_carmichael(int64_t n)
+{
+	for(int64_t b = 2; b < n; b++)
+	{
+		if( b != mp_int64_dpow_pl_log(b, n, n) )
+		{
+			return 0;
+		}
+	}
+
+	return 1;
+}
+
 int qftest(int64_t n, int64_t D, qfield64_t a)
 {
 	int64_t M = n;
@@ -178,6 +191,8 @@ int main(int argc, char *argv[])
 	if( print_pseudoprimes )
 		printf("pseudoprimes: ");
 
+	int pseudoprimes_limit = 20;
+
 	// for each number
 	for(int64_t n = 3; n < bound; n++)
 	{
@@ -191,12 +206,18 @@ int main(int argc, char *argv[])
 			if( t < 0 ) pseudoprimes_n++;
 			if( !!r ) failed++;
 			if( !!r && debug ) printf("FAIL: %li is PRIME, result was COMPOSITE\n", n);
-			if( !!t && print_pseudoprimes ) printf("%li, ", n);
+			if( !!t && print_pseudoprimes && pseudoprimes <= pseudoprimes_limit )
+			{
+				if( is_carmichael(n) )
+					printf("\\textbf{%li}, ", n);
+				else
+					printf("%li, ", n);
+			}
 		}
 	}
 
 	if( print_pseudoprimes )
-		printf(", ...\n");
+		printf("\\dots\n");
 
 	message("done: %li pseudoprimes (+: %li, -: %li), %li fails under %li\n", pseudoprimes, pseudoprimes_p, pseudoprimes_n, failed, bound);
 
